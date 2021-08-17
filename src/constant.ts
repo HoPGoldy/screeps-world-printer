@@ -25,3 +25,6 @@ export const COLORS = {
     /** 新手保护区 */
     NOVICE: '#7cff7c'
 };
+
+/** 官方服务器的地图瓦片 cdn */
+export const OFFICE_MAP_CDN = 'https://d3os7yery2usni.cloudfront.net'
