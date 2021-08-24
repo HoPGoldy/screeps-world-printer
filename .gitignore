@@ -104,3 +104,7 @@ dist
 .tern-port
 
 .screeps.yaml
+
+.officeToken
+
+.dist/

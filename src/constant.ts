@@ -1,30 +1,48 @@
-/** 要绘制的 shard */
-export const SCAN_SHARD = ['shard0', 'shard1', 'shard2', 'shard3']
-
-/** 每个房间的边长像素值 */
-export const ROOM_PIXEL = 20;
-
-/** 区块由几乘几的房间组成 */
-export const ROOM_PRE_SECTOR = 10;
-
-/**
- * 放大倍数
- * 必须大于 1，因为默认情况下一个房间只有 20 像素，会影响头像显示效果，但是该值太大会降低渲染速度
- */
-export const ZOOM = 3;
+import { resolve } from 'path';
+import { RoomStatus } from './type';
 
 /** 头像边框的颜色 */
 export const AVATAR_OUTLINE_COLOR = '#151515';
 
+export const BADGE_RESIZE_WITH_LEVEL: { [level: number]: number } = {
+    8: 0.6,
+    7: 0.55,
+    6: 0.5,
+    5: 0.45,
+    4: 0.4,
+    3: 0.35,
+    2: 0.3,
+    1: 0.25,
+    0: 0.25
+}
+
 /** 地图指定区域的颜色 */
 export const COLORS = {
     /** 未激活区域 */
-    INACTIVATED: '#000000',
+    [RoomStatus.Inactivated]: '#000000',
     /** 重生区 */
-    RESPAWN: '#006bff',
+    [RoomStatus.Respawn]: '#006bff',
     /** 新手保护区 */
-    NOVICE: '#7cff7c'
+    [RoomStatus.Novice]: '#7cff7c'
 };
 
-/** 官方服务器的地图瓦片 cdn */
-export const OFFICE_MAP_CDN = 'https://d3os7yery2usni.cloudfront.net'
+/** 缓存存放路径 */
+export const CACHE_PATH = resolve(__dirname, '../.cache/');
+
+/** 结果文件存放路径 */
+export const DIST_PATH = resolve(__dirname, '../.dist/');
+
+/** 请求出错时的重试次数 */
+export const DEFAULT_RETRY_TIME = 3;
+
+/** 请求出错时的重试间隔 */
+export const RETRY_INTERVAL = 3000;
+
+/** 请求超时时间（ms） */
+export const DEFAULT_TIMEOUT = 30 * 1000;
+
+/** 默认的房间正方形图片边长（px） */
+export const ROOM_SIZE = 150;
+
+/** sharp 像素处理上限 */
+export const PIXEL_LIMIT = 400000000;
