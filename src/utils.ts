@@ -43,7 +43,7 @@ export const retryWarpper = function <T>(asyncFunc: (...args: any[]) => Promise<
         catch (e) {
             if (retryTime <= 0) throw e
 
-            console.log(`${args} 查询失败，正在重试(${DEFAULT_RETRY_TIME - retryTime}/${DEFAULT_RETRY_TIME})`)
+            // console.log(`${args} 查询失败，正在重试(${DEFAULT_RETRY_TIME - retryTime}/${DEFAULT_RETRY_TIME})`)
             retryTime -= 1
             await new Promise(reslove => setTimeout(reslove, RETRY_INTERVAL, true))
             return await retryCallback(...args)
@@ -53,6 +53,13 @@ export const retryWarpper = function <T>(asyncFunc: (...args: any[]) => Promise<
     return retryCallback
 }
 
+/**
+ * 给图片添加透明度
+ * 
+ * @param sharp 要添加的图片
+ * @param opacity 透明度 0 - 255，255 是完全不透明
+ * @returns 添加透明度之后的图片
+ */
 export const addOpacity = function (sharp: Sharp, opacity: number = 128): Sharp {
     return sharp.composite([{
         input: Buffer.from([255, 255, 255, opacity]),
@@ -60,41 +67,4 @@ export const addOpacity = function (sharp: Sharp, opacity: number = 128): Sharp 
         tile: true,
         blend: 'dest-in'
     }]);
-}
-
-/**
- * 控制并发数量
- * 
- * @param {any[]} collection 待执行的任务数组
- * @param {number} limit 最大并发数量
- * @param {async function} asyncCallback 要执行的异步回调
- */
-export const concurrent = async function <T, R>(collection: T[], limit: number, asyncCallback: (task: T, index: number) => Promise<R>): Promise<R[]> {
-    // 用于在 while 循环中取出任务的迭代器
-    const taskIterator = collection.entries();
-    // 任务池
-    const pool = new Set();
-    // 最终返回的结果数组
-    const finalResult: R[] = [];
-
-    do {
-        const { done, value: [index, task] = [] } = taskIterator.next();
-        // 任务都已执行，等待最后的剩下的任务执行完毕
-        if (done) {
-            await Promise.allSettled(pool);
-            break;
-        };
-
-        // 将结果存入结果数组，并从任务池中移除自己
-        const promise = retryWarpper(asyncCallback)(task, index)
-            .then(data => finalResult[index] = data)
-            .finally(() => pool.delete(promise))
-
-        // 达到上限后就等待某个任务完成
-        if (pool.add(promise).size >= limit) {
-            await Promise.race(pool);
-        }
-    } while (true)
-
-    return Array.from(finalResult);
 }

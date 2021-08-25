@@ -12,7 +12,6 @@ catch (e) {
 drawWorld({
     host: 'https://screeps.com/',
     token,
-    shard: 'shard3',
-    roomTileCdn: 'https://d3os7yery2usni.cloudfront.net',
+    shard: 'shard1',
     getRoomNames
 });

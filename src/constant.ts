@@ -4,6 +4,10 @@ import { RoomStatus } from './type';
 /** 头像边框的颜色 */
 export const AVATAR_OUTLINE_COLOR = '#151515';
 
+/**
+ * 房间等级对应的头像缩放等级
+ * 不缩放时几乎和地图瓦片等大
+ */
 export const BADGE_RESIZE_WITH_LEVEL: { [level: number]: number } = {
     8: 0.6,
     7: 0.55,
@@ -15,6 +19,9 @@ export const BADGE_RESIZE_WITH_LEVEL: { [level: number]: number } = {
     1: 0.25,
     0: 0.25
 }
+
+/** 默认的官服地图瓦片 cdn */
+export const DEFAULT_ROOM_TILE_CDN = 'https://d3os7yery2usni.cloudfront.net';
 
 /** 地图指定区域的颜色 */
 export const COLORS = {
@@ -33,7 +40,7 @@ export const CACHE_PATH = resolve(__dirname, '../.cache/');
 export const DIST_PATH = resolve(__dirname, '../.dist/');
 
 /** 请求出错时的重试次数 */
-export const DEFAULT_RETRY_TIME = 3;
+export const DEFAULT_RETRY_TIME = 5;
 
 /** 请求出错时的重试间隔 */
 export const RETRY_INTERVAL = 3000;

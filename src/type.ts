@@ -64,6 +64,7 @@ interface RoomOwner {
 
 /**
  * 房间信息
+ * 由 map/stats 接口获取
  */
 export interface RoomInfo {
     /**
@@ -76,6 +77,9 @@ export interface RoomInfo {
     own?: RoomOwner
 }
 
+/**
+ * 用户头像信息
+ */
 interface UserBadge {
     type: number
     color1: string
@@ -85,16 +89,29 @@ interface UserBadge {
     flip: boolean
 }
 
+/**
+ * 用户信息
+ * 由 map/stats 接口获取
+ */
 export interface UserInfo {
     _id: string
     username: string
     badge: UserBadge
 }
 
+/**
+ * 接口 map/stats 的响应
+ */
 export interface MapStatsResp {
+    /**
+     * 所有查询的房间信息
+     */
     stats: {
         [roomName: string]: RoomInfo
     }
+    /**
+     * 所有查询的房间所有者信息
+     */
     users: {
         [userId: string]: UserInfo
     }
