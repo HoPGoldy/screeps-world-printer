@@ -69,12 +69,48 @@ interface RoomOwner {
 export interface RoomInfo {
     /**
      * 该房间的状态
+     * 游戏接口返回的只有正常和未激活两种状态
+     * 绘制之前会根据 novice 和 respawnArea 属性来为此字段添加是否为新手区和重生区状态
      */
     status: RoomStatus
     /**
      * 该房间所有者
      */
     own?: RoomOwner
+    /**
+     * 当前新手区到期时间的 13 位时间戳
+     */
+    novice?: number
+    /**
+     * 当前重生区到期时间的 13 位时间戳
+     */
+    respawnArea?: number
+    /**
+     * 该房间的玩家签名
+     */
+    sign?: SignInfo
+}
+
+/**
+ * 玩家对房间的签名
+ */
+interface SignInfo {
+    /**
+     * 签名时的时间
+     */
+    datetime: number
+    /**
+     * 签名内容
+     */
+    text: string
+    /**
+     * 签名时的游戏 tick 时间
+     */
+    time: number
+    /**
+     * 签名玩家的 id
+     */
+    user: string
 }
 
 /**
@@ -147,6 +183,15 @@ export interface DrawWorldOptions {
      * ]
      */
     getRoomNames: (size: MapSize) => Promise<string[][]>
+    /**
+     * 保存到的路径
+     * 如：./.dist/result.png
+     * 需要自行确保该路径存在
+     * 
+     * @param host 上面传入的服务器地址
+     * @param shard 上面传入的镜面名称
+     */
+    savePath?: (host: string, shard?: string) => Promise<string>
 }
 
 /**

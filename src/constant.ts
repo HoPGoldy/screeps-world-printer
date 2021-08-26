@@ -24,7 +24,7 @@ export const BADGE_RESIZE_WITH_LEVEL: { [level: number]: number } = {
 export const DEFAULT_ROOM_TILE_CDN = 'https://d3os7yery2usni.cloudfront.net';
 
 /** 地图指定区域的颜色 */
-export const COLORS = {
+export const ROOM_MASK_COLORS = {
     /** 未激活区域 */
     [RoomStatus.Inactivated]: '#000000',
     /** 重生区 */

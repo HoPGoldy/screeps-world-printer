@@ -12,6 +12,6 @@ catch (e) {
 drawWorld({
     host: 'https://screeps.com/',
     token,
-    shard: 'shard1',
+    shard: 'shard2',
     getRoomNames
 });

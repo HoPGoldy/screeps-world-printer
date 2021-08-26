@@ -1,12 +1,14 @@
 import sharp from "sharp";
 import { ScreepsService } from "./service";
-import { writeJSON, readJSON, readJson } from 'fs-extra'
+import { writeJSON, readJSON, readJson, ensureDir } from 'fs-extra'
 import { CacheManager } from "./cache";
 import { DrawWorldOptions, MapStatsResp, DrawMaterial, UserInfo, MapSize, RoomStatus } from "./type";
 import { mapLimit } from 'async';
-import { BADGE_RESIZE_WITH_LEVEL, PIXEL_LIMIT, ROOM_SIZE } from "./constant";
+import { DIST_PATH, PIXEL_LIMIT, ROOM_SIZE } from "./constant";
 import { SingleBar, Presets } from 'cli-progress';
-import { addOpacity } from "./utils";
+import { fixRoomStats } from "./utils";
+import path from "path";
+import { drawRoom } from "./drawRoom";
 
 /**
  * 绘制指定世界地图
@@ -26,7 +28,8 @@ export const drawWorld = async function (options: DrawWorldOptions) {
     console.log('正在读取地图');
     // const roomStats = await readJson('./.cache/tempRoomStats.json');
     const roomStats = await service.getMapStats({ rooms: roomNameMatrix.flat(2), shard });
-    await writeJSON('./.cache/tempRoomStats.json', roomStats);
+    fixRoomStats(roomStats);
+    // await writeJSON('./.cache/tempRoomStats.json', roomStats);
 
     // 通过房间名数组配合上一步获取的全地图数据，开始获取素材（地图瓦片和玩家头像）
     // 这一步的耗时是最长的（在没有缓存的情况下）
@@ -39,13 +42,31 @@ export const drawWorld = async function (options: DrawWorldOptions) {
 
     // 将绘制完成的房间图像二维数组拼接成一整张图片
     const result = await mergeRoom(roomTileMatrix, mapSize);
-    result.toFile('./result.png')
 
-    console.log('结果已保存');
+    // 获取存放路径并保存结果
+    const getSavePath = options.savePath || getDefaultSavePath;
+    const savePath = await getSavePath(host, shard);
+    await result.toFile(savePath)
+
+    console.log(`绘制完成！结果已保存至 ${savePath}`);
+}
+
+/**
+ * 获取默认保存文件路径
+ */
+const getDefaultSavePath = async (host: string, shard?: string) => {
+    await ensureDir(DIST_PATH);
+    const now = new Date();
+    return path.resolve(DIST_PATH,
+        `world-map-${shard || ''}` +
+        `-${now.getFullYear()}_${now.getMonth()}_${now.getDate()}` +
+        `-${now.getHours()}_${now.getMinutes()}_${now.getSeconds()}.png`
+    )
 }
 
 /**
  * 二维数组异步迭代器
+ * async.mapLimit 的二维数组版本
  * 
  * @param collectionMatrix 要进行迭代的二维数组
  * @param limit 最大并发数量
@@ -66,6 +87,7 @@ const matrixMapLimit = async function <T, R>(
     bar.start(total, 0);
 
     try {
+        // 简单粗暴使用 mapLimit 迭代两层
         const result = await mapLimit<T[], R[]>(collectionMatrix, 1, async collectionRow => {
             return await mapLimit<T, R>(collectionRow, limit, async data => {
                 const itemResult = await asyncCallback(data);
@@ -133,31 +155,6 @@ const materialCreatorFactory = function (service: ScreepsService, cache: CacheMa
 
         return material;
     }
-}
-
-
-/**
- * 绘制单个房间
- * 
- * @param material 房间绘制素材
- * @returns 单个房间的最终图像 Buffer
- */
-export const drawRoom = async function (material: DrawMaterial): Promise<Buffer> {
-    const roomTile = await material.getRoom();
-    if (!material.getBadge) return roomTile;
-
-    const rawBadge = await material.getBadge();
-    const badgeSharp = sharp(rawBadge);
-    const { width: rawBadgeWidth } = await badgeSharp.metadata();
-    const ownLevel = material.roomInfo.own?.level;
-    // level 有可能为 0，所以需要特判一下
-    if (!rawBadgeWidth || ownLevel == undefined) throw new Error(`房间 ${material.roomName} 的头像宽度 ${rawBadgeWidth} 或玩家等级 ${ownLevel} 为空`);
-
-    const resizeWidth = Math.ceil(rawBadgeWidth * BADGE_RESIZE_WITH_LEVEL[ownLevel]);
-    let badge = badgeSharp.resize(resizeWidth);
-    if (ownLevel === 0) badge = addOpacity(badgeSharp, 128);
-
-    return sharp(roomTile).composite([{ input: await badge.toBuffer(), blend: 'atop' }]).toBuffer();
 }
 
 
