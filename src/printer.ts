@@ -1,9 +1,9 @@
 import sharp from "sharp";
 import { ScreepsService } from "./service";
-import { writeJSON, readJSON, readJson, ensureDir } from 'fs-extra'
+import { writeJSON, readJSON, ensureDir } from 'fs-extra'
 import { CacheManager } from "./cache";
 import { DrawWorldOptions, MapStatsResp, DrawMaterial, UserInfo, MapSize, RoomStatus } from "./type";
-import { mapLimit } from 'async';
+import { map, mapLimit } from 'async';
 import { DIST_PATH, PIXEL_LIMIT, ROOM_SIZE } from "./constant";
 import { SingleBar, Presets } from 'cli-progress';
 import { fixRoomStats } from "./utils";
@@ -19,14 +19,16 @@ export const drawWorld = async function (options: DrawWorldOptions) {
     const service = new ScreepsService(host, serviceOptions);
     const cache = new CacheManager(host + (shard || ''));
 
+    console.log(`开始绘制 ${host} ${shard || ''} 的世界地图`);
+
     // 获取世界的尺寸，并将尺寸传递给外部回调来获取二维的房间名数组
-    console.log('正在加载尺寸');
+    console.log('正在加载地图尺寸');
     const mapSize = await service.getMapSize();
     const roomNameMatrix = await getRoomNames(mapSize);
 
     // 拿着二维房间名数组请求服务器，获取所有房间和所有者的信息
-    console.log('正在读取地图');
-    // const roomStats = await readJson('./.cache/tempRoomStats.json');
+    console.log('正在获取世界信息');
+    // const roomStats = await readJSON('./.cache/tempRoomStats.json');
     const roomStats = await service.getMapStats({ rooms: roomNameMatrix.flat(2), shard });
     fixRoomStats(roomStats);
     // await writeJSON('./.cache/tempRoomStats.json', roomStats);
@@ -34,14 +36,13 @@ export const drawWorld = async function (options: DrawWorldOptions) {
     // 通过房间名数组配合上一步获取的全地图数据，开始获取素材（地图瓦片和玩家头像）
     // 这一步的耗时是最长的（在没有缓存的情况下）
     // 在这一步会返回素材的访问器而不是直接将其载入到内存
+    console.log('正在下载素材');
     const createMaterial = materialCreatorFactory(service, cache, roomStats);
-    const roomMaterialMatrix = await matrixMapLimit(roomNameMatrix, 15, createMaterial, '正在下载素材');
+    const roomMaterialMatrix = await matrixMapLimit(roomNameMatrix, 15, createMaterial, '下载进度');
 
-    // 素材下载完毕，提高并发数量，将素材加载到内存并绘制单个房间的最终图像
-    const roomTileMatrix = await matrixMapLimit(roomMaterialMatrix, 30, drawRoom, '正在绘制房间');
-
-    // 将绘制完成的房间图像二维数组拼接成一整张图片
-    const result = await mergeRoom(roomTileMatrix, mapSize);
+    // 将所有素材按行分别读取到内存并绘制，在将绘制完成的地图行拼接成一整张图片
+    console.log('正在绘制地图')
+    const result = await drawAllRoom(roomMaterialMatrix, mapSize, cache);
 
     // 获取存放路径并保存结果
     const getSavePath = options.savePath || getDefaultSavePath;
@@ -58,9 +59,9 @@ const getDefaultSavePath = async (host: string, shard?: string) => {
     await ensureDir(DIST_PATH);
     const now = new Date();
     return path.resolve(DIST_PATH,
-        `world-map-${shard || ''}` +
-        `-${now.getFullYear()}_${now.getMonth()}_${now.getDate()}` +
-        `-${now.getHours()}_${now.getMinutes()}_${now.getSeconds()}.png`
+        `${shard || ''}` +
+        `_${now.getFullYear()}-${now.getMonth()}-${now.getDate()}` +
+        `_${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.png`
     )
 }
 
@@ -159,39 +160,46 @@ const materialCreatorFactory = function (service: ScreepsService, cache: CacheMa
 
 
 /**
- * 将所有房间瓦片拼接成一张地图
+ * 绘制并将所有房间瓦片拼接成一张地图
  * 
- * @param tileMatrix 所有房间 Buffer
+ * @param materialMatrix 所有房间 Buffer
  * @param mapSize 地图尺寸
  */
-const mergeRoom = async function (tileMatrix: Buffer[][], mapSize: MapSize) {
+const drawAllRoom = async function (materialMatrix: DrawMaterial[][], mapSize: MapSize, cache: CacheManager) {
     const height = mapSize.height * ROOM_SIZE;
     const width = mapSize.width * ROOM_SIZE;
 
-    const format = '正在拼接地图 {bar} {percentage}% {value}/{total}'
+    const format = '拼接进度 {bar} {percentage}% {value}/{total}'
     const mergeRowBar = new SingleBar({ format, fps: 1 }, Presets.legacy);
     mergeRowBar.start(mapSize.height + 1, 0);
 
     // 拼接所有行
-    const rowBuffers = await mapLimit<Buffer[], Buffer>(tileMatrix, 10, async tileRow => {
+    const rowBuffers = await mapLimit<DrawMaterial[], string>(materialMatrix, 1, async materialRow => {
+        // 绘制该行的房间
+        const roomTileRow = await map<DrawMaterial, Buffer>(materialRow, drawRoom);
+        // 生成该行背景
         const rowBg = sharp({ create: { height: ROOM_SIZE, width, channels: 4, background: '#fff' }, limitInputPixels: PIXEL_LIMIT });
-        const buffer = await rowBg.composite(tileRow.map((tile, index) => ({
-            input: tile,
+
+        // 粘贴所有房间瓦片到背景上
+        const rowSharp = rowBg.composite(roomTileRow.map((input, index) => ({
+            input,
             blend: 'atop',
             top: 0,
             left: index * ROOM_SIZE
-        }))).png().toBuffer();
+        })));
 
+        // 把这一行地图缓存到本地
+        const rowSavePath = await cache.setMapRow(materialRow.map(({ roomName }) => roomName), rowSharp);
         mergeRowBar.increment();
-        return buffer;
+        return rowSavePath;
     });
 
     // 将所有行拼接在一起
     const result = sharp({
         create: { height, width, channels: 4, background: '#fff' },
         limitInputPixels: PIXEL_LIMIT
-    }).composite(rowBuffers.map((row, index) => ({
-        input: row,
+    }).composite(rowBuffers.map((input, index) => ({
+        input,
         blend: 'atop',
         top: index * ROOM_SIZE,
         left: 0

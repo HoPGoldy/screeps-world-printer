@@ -1,0 +1,38 @@
+name: "draw offical map"
+
+inputs:
+  shard-name:
+    description: '要绘制的 shard 名称，例如：shard3'
+    required: true
+  artifact-name:
+    description: '最后的结果名称，即 upload-artifact 的 name 字段'
+    required: true
+  screeps-token:
+    description: '访问 screeps 官服的令牌'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+    - uses: egordm/gha-yarn-node-cache@v1
+
+    - name: Cache Draw Material
+      uses: actions/cache@v2
+      with:
+        path: .cache
+        key: material-cache-${{ inputs.shard-name }}
+
+    - name: Install
+      shell: bash
+      run: yarn install
+
+    - name: Draw Map
+      shell: bash
+      run: |
+        npm run draw-offical -- --token=${{ inputs.screeps-token }} --shard=${{ inputs.shard-name }}
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: .dist

@@ -52,4 +52,4 @@ export const DEFAULT_TIMEOUT = 30 * 1000;
 export const ROOM_SIZE = 150;
 
 /** sharp 像素处理上限 */
-export const PIXEL_LIMIT = 400000000;
+export const PIXEL_LIMIT = 800000000;

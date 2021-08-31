@@ -4,7 +4,7 @@ import fs from 'fs-extra';
 import { CACHE_PATH } from "./constant";
 import { createHash } from 'crypto';
 import { resolve } from 'path';
-import sharp from 'sharp';
+import sharp, { Sharp } from 'sharp';
 
 /**
  * 缓存管理器
@@ -105,5 +105,20 @@ export class CacheManager {
      */
     private getHash(dataStr: string): string {
         return createHash('md5').update(dataStr + this.mapKey).digest('hex')
+    }
+
+    /**
+     * 将地图行结果缓存起来
+     * 
+     * @param roomNames 该地图行包含的房间名称
+     * @param mapRowSharp 地图行 sharp 对象
+     * @returns 保存到的路径
+     */
+    public async setMapRow(roomNames: string[], mapRowSharp: Sharp): Promise<string> {
+        const mapRowHash = this.getHash(roomNames.join(','));
+        const rowSavePath = resolve(CACHE_PATH, `./mapRow.${mapRowHash}.png`);
+
+        await mapRowSharp.png().toFile(rowSavePath);
+        return rowSavePath;
     }
 }

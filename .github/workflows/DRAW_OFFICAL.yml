@@ -1,0 +1,77 @@
+name: DRAW_OFFICAL
+
+on:
+  # push:
+    # branches:
+    #   - "master"
+  schedule:
+    # 每天的早上8点、下午6点执行一次
+    - cron: '0 8,18 * * *'
+
+jobs:
+  draw-shard0:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/draw-screeps-offical
+        with:
+          shard-name: shard0
+          artifact-name: shard0
+          screeps-token: ${{ secrets.SCREEPS_TOKEN }}
+  
+  draw-shard1:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/draw-screeps-offical
+        with:
+          shard-name: shard1
+          artifact-name: shard1
+          screeps-token: ${{ secrets.SCREEPS_TOKEN }}
+  
+  draw-shard2:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/draw-screeps-offical
+        with:
+          shard-name: shard2
+          artifact-name: shard2
+          screeps-token: ${{ secrets.SCREEPS_TOKEN }}
+  
+  draw-shard3:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/draw-screeps-offical
+        with:
+          shard-name: shard3
+          artifact-name: shard3
+          screeps-token: ${{ secrets.SCREEPS_TOKEN }}
+
+  release:
+    runs-on: ubuntu-latest
+
+    if: always()
+    needs: [draw-shard0, draw-shard1, draw-shard2, draw-shard3]
+    steps:
+      - uses: actions/download-artifact@v2
+
+      - name: Get Date
+        run: echo "ReleaseVersion=$(TZ=':Asia/Shanghai' date '+%Y-%m-%d_%H-%M-%S')" >> $GITHUB_ENV
+
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.RELEASE_TOKEN }}"
+          title: "${{ env.ReleaseVersion }}"
+          automatic_release_tag: "${{ env.ReleaseVersion }}"
+          prerelease: false
+          files: |
+            shard0
+            shard1
+            shard2
+            shard3
