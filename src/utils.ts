@@ -9,7 +9,7 @@ import { MapSize, MapStatsResp, RoomStatus } from "./type"
  * @param mapSize 地图尺寸
  * @returns 房间名二维数组
  */
-export const getCentrosymmetricRoomNams = async function ({ height, width }: MapSize) {
+export const getCentrosymmetricRoomNames = async function ({ height, width }: MapSize) {
     const helfWidth = Math.floor(width / 2);
     const xSectors = [
         ...Array.from({ length: helfWidth }).map((_, x) => `W${x}`).reverse(),
@@ -21,6 +21,16 @@ export const getCentrosymmetricRoomNams = async function ({ height, width }: Map
         ...Array.from({ length: helfHeight }).map((_, x) => `N${x}`).reverse(),
         ...Array.from({ length: helfHeight }).map((_, x) => `S${x}`),
     ];
+
+    return ySectors.map(yRoomName => xSectors.map(xRoomName => xRoomName + yRoomName));
+}
+
+/**
+ * 获取 steam 版 screeps 启动的默认服务器的房间名数组
+ */
+export const getDefaultServerRoomNames = async function () {
+    const xSectors = Array.from({ length: 11 }).map((_, x) => `W${x}`).reverse();
+    const ySectors = Array.from({ length: 11 }).map((_, x) => `N${x}`).reverse();
 
     return ySectors.map(yRoomName => xSectors.map(xRoomName => xRoomName + yRoomName));
 }

@@ -47,7 +47,7 @@ export const drawWorld = async function (options: DrawWorldOptions) {
     // 获取存放路径并保存结果
     const getSavePath = options.savePath || getDefaultSavePath;
     const savePath = await getSavePath(host, shard);
-    await result.toFile(savePath)
+    await result.toFile(savePath);
 
     console.log(`绘制完成！结果已保存至 ${savePath}`);
 }

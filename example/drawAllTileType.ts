@@ -1,4 +1,4 @@
-import { drawRoom } from "../src/printer";
+import { drawRoom } from "../src/drawRoom";
 import { DrawMaterial, RoomStatus } from "../src/type";
 import { promises as fsPromise } from 'fs';
 import sharp from "sharp";

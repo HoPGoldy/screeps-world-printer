@@ -1,4 +1,4 @@
-import { drawWorld, getCentrosymmetricRoomNams as getRoomNames } from '../src';
+import { drawWorld, getCentrosymmetricRoomNames as getRoomNames } from '../src';
 
 const args = Object.fromEntries(process.argv
     .filter(arg => arg.startsWith('--'))

@@ -1,9 +1,6 @@
-import { drawWorld } from '../src';
+import { drawWorld, getDefaultServerRoomNames as getRoomNames } from '../src';
 
 drawWorld({
-    host: 'https://server2.screepspl.us/',
-    getRoomNames: async (roomInfo) => {
-        console.log('🚀 ~ file: drawOfficalServer.ts ~ line 10 ~ getRoom: ~ roomInfo', roomInfo)
-        return [['string']]
-    }
+    host: 'http://127.0.0.1:21025',
+    getRoomNames
 });

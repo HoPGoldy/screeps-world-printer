@@ -1,2 +1,2 @@
-export { getCentrosymmetricRoomNams } from './utils';
+export { getCentrosymmetricRoomNames, getDefaultServerRoomNames } from './utils';
 export { drawWorld } from './printer';
