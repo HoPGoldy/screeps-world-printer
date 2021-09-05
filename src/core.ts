@@ -15,26 +15,26 @@ export const fetchWorld = async function (context: DrawContext): Promise<WorldDa
     await service.connect();
 
     // 获取世界的尺寸，并将尺寸传递给外部回调来获取二维的房间名数组
-    emitter.emit(PrintEvent.Process, ProcessType.BeforeFetchSize, { host, shard });
+    emitter.emit(PrintEvent.Process, { event: ProcessType.BeforeFetchSize, data: { host, shard }});
     const mapSize = await service.getMapSize();
     const roomNameMatrix = await getRoomNames(mapSize);
-    emitter.emit(PrintEvent.Process, ProcessType.AfterFetchSize);
+    emitter.emit(PrintEvent.Process, { event: ProcessType.AfterFetchSize });
 
     // 拿着二维房间名数组请求服务器，获取所有房间和所有者的信息
-    emitter.emit(PrintEvent.Process, ProcessType.BeforeFetchWorld, { mapSize });
+    emitter.emit(PrintEvent.Process, { event: ProcessType.BeforeFetchWorld, data: { mapSize }});
     // const roomStats = await readJSON('./.cache/tempRoomStats.json');
     const roomStats = await service.getMapStats(roomNameMatrix.flat(2));
     fixRoomStats(roomStats);
     // await writeJSON('./.cache/tempRoomStats.json', roomStats);
-    emitter.emit(PrintEvent.Process, ProcessType.AfterFetchWorld);
+    emitter.emit(PrintEvent.Process, { event: ProcessType.AfterFetchWorld });
 
     // 通过房间名数组配合上一步获取的全地图数据，开始获取素材（地图瓦片和玩家头像）
     // 这一步的耗时是最长的（在没有缓存的情况下）
     // 在这一步会返回素材的访问器而不是直接将其载入到内存
-    emitter.emit(PrintEvent.Process, ProcessType.BeforeDownload, { roomStats });
+    emitter.emit(PrintEvent.Process, { event: ProcessType.BeforeDownload, data: { roomStats } });
     const createMaterial = materialCreatorFactory(context, roomStats);
     const roomMaterialMatrix = await matrixMapLimit(roomNameMatrix, 15, createMaterial);
-    emitter.emit(PrintEvent.Process, ProcessType.AfterDownload);
+    emitter.emit(PrintEvent.Process, { event: ProcessType.AfterDownload });
 
     return { roomMaterialMatrix, mapSize, roomStats };
 }
@@ -46,14 +46,14 @@ export const drawWorld = async function (dataSet: WorldDataSet, context: DrawCon
     const { emitter, saveResult } = context;
 
     // 将所有素材按行分别读取到内存并绘制，再将绘制完成的地图行拼接成一整张图片
-    emitter.emit(PrintEvent.Process, ProcessType.BeforeDraw, { dataSet });
+    emitter.emit(PrintEvent.Process, { event: ProcessType.BeforeDraw, data: { dataSet } });
     const result = await drawAllRoom(dataSet, context);
-    emitter.emit(PrintEvent.Process, ProcessType.AfterDraw);
+    emitter.emit(PrintEvent.Process, { event: ProcessType.AfterDraw });
 
     // 获取存放路径并保存结果
-    emitter.emit(PrintEvent.Process, ProcessType.BeforeSave, { result });
+    emitter.emit(PrintEvent.Process, { event: ProcessType.BeforeSave, data: { result } });
     const savePath = await saveResult(result);
-    emitter.emit(PrintEvent.Process, ProcessType.AfterSave, { savePath });
+    emitter.emit(PrintEvent.Process, { event: ProcessType.AfterSave, data: { savePath } });
 
     return savePath;
 }

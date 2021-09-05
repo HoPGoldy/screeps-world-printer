@@ -107,6 +107,6 @@ dist
 
 .officeToken
 
-.dist/
-
 .test.js
+
+.screeps-world-printer/

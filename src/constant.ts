@@ -34,10 +34,10 @@ export const ROOM_MASK_COLORS = {
 };
 
 /** 缓存存放路径 */
-export const CACHE_PATH = resolve(__dirname, '../.cache/');
+export const CACHE_PATH = resolve(__dirname, '../.screeps-world-printer/cache/');
 
 /** 结果文件存放路径 */
-export const DIST_PATH = resolve(__dirname, '../.dist/');
+export const DIST_PATH = resolve(__dirname, '../.screeps-world-printer/dist/');
 
 /** 请求出错时的重试次数 */
 export const DEFAULT_RETRY_TIME = 5;

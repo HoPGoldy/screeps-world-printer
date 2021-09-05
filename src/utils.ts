@@ -111,26 +111,36 @@ export const fixRoomStats = function (roomStats: MapStatsResp): void {
     }
 }
 
-export const defaultSaver = async function (connectInfo: ServerConnectInfo): Promise<ResultSaver> {
-    await ensureDir(DIST_PATH);
-    let savePath: string;
+/**
+ * 获取默认保存器
+ * 
+ * @param connectInfo 服务器连接信息
+ * @param distPath 保存路径
+ * @returns 执行保存，并返回保存路径的异步函数
+ */
+export const defaultSaver = async function (connectInfo: ServerConnectInfo, distPath: string = DIST_PATH): Promise<ResultSaver> {
+    await ensureDir(distPath);
+    let saveName: string;
 
+    // 保存官服的名称前缀
     if ('shard' in connectInfo) {
-        savePath = connectInfo.shard;
+        saveName = connectInfo.shard;
     }
+    // 保存私服的名称前缀
     else {
         const hash = createHash('md5').update(connectInfo.host).digest('hex');
-        savePath = `drawResult${hash}`
+        saveName = `drawResult${hash}`
     }
 
+    // 添加时间戳后缀
     const now = new Date();
-    savePath += `_${now.getFullYear()}-${now.getMonth()}-${now.getDate()}` +
+    saveName += `_${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}` +
         `_${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.png`;
 
-    path.resolve(DIST_PATH, savePath);
+    const savePath = path.resolve(distPath, saveName);
 
     return async result => {
-        await result.toFile(savePath)
+        await result.toFile(savePath);
         return savePath;
     };
 }

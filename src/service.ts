@@ -33,6 +33,7 @@ export class ScreepsService {
         this.host = opt.host;
         this.http = axios.create({ baseURL: opt.host });
         this.http.defaults.timeout = DEFAULT_TIMEOUT;
+        if ('shard' in opt) this.shard = opt.shard;
         this.connectInfo = opt;
     }
 
@@ -55,7 +56,7 @@ export class ScreepsService {
     private async login(email: string, password: string) {
         const resp = await this.http.post('api/auth/signin', { email, password });
         console.log('🚀 ~ file: service.ts ~ line 59 ~ ScreepsService ~ login ~ resp', resp)
-
+        this.setToken(resp.headers['X-Token']);
     }
 
     private setToken(newToken: string): void {

@@ -3,12 +3,19 @@ import { DrawMaterial, RoomStatus } from "../src/type";
 import { promises as fsPromise } from 'fs';
 import sharp from "sharp";
 import fs from 'fs-extra';
-import { DIST_PATH } from "../src/constant";
+import { CACHE_PATH, DIST_PATH } from "../src/constant";
+import { getArgs } from "./utils";
+import path from "path";
+
+const { tile, badge } = getArgs();
+
+if (!tile) throw new Error('无效的地图瓦片，请使用 --tile=tile-name 指定缓存中的地图瓦片');
+if (!badge) throw new Error('无效的头像 svg，请使用 --badge=badge-name 指定缓存中的头像图片');
 
 /** 房间瓦片 png 图片路径 */
-const TILE_PATH = './.cache/W49S9.9de57c1b0484fa8c6da5f754e7aea002.png';
+const TILE_PATH = path.resolve(CACHE_PATH, tile);
 /** 头像 svg 图片路径 */
-const BADGE_PATH = './.cache/HoPGoldy.415a07134759db7be91fe9e5a7d81583.svg';
+const BADGE_PATH = path.resolve(CACHE_PATH, badge);
 
 interface TileInfo {
     name: string

@@ -1,6 +1,7 @@
 import { Presets, SingleBar } from "cli-progress";
 import EventEmitter from "events";
 import { CacheManager } from "./cache";
+import { DIST_PATH } from "./constant";
 import { drawWorld, fetchWorld } from "./core";
 import { drawRoom } from "./drawRoom";
 import { ScreepsService } from "./service";
@@ -51,6 +52,16 @@ export class ScreepsWorldPrinter extends EventEmitter {
     }[] = []
 
     /**
+     * 下载进度条
+     */
+    private downloadBar?: SingleBar
+
+    /**
+     * 绘制进度条
+     */
+    private drawBar?: SingleBar
+
+    /**
      * 实例化地图绘对象
      * 
      * @param connectInfo 服务器连接信息
@@ -67,7 +78,6 @@ export class ScreepsWorldPrinter extends EventEmitter {
         this.cache = new CacheManager(cacheKey);
 
         this.talkative();
-        console.log(this.logListener)
     }
 
     /**
@@ -103,11 +113,13 @@ export class ScreepsWorldPrinter extends EventEmitter {
                 console.log('正在下载素材');
                 downlaodBar.start(Object.keys(data.roomStats.stats).length, 0);
             },
+            [ProcessType.AfterDownload]: () => downlaodBar.stop(),
             [ProcessType.BeforeDraw]: data => {
                 console.log('正在绘制地图');
                 const { width, height } = data.dataSet.mapSize;
                 drawBar.start(width * height, 0);
             },
+            [ProcessType.AfterDraw]: () => drawBar.stop(),
             [ProcessType.BeforeSave]: () => {
                 console.log('正在保存结果');
             },
@@ -133,6 +145,8 @@ export class ScreepsWorldPrinter extends EventEmitter {
             { event: PrintEvent.Download, listener: downloadListener },
             { event: PrintEvent.Draw, listener: drawListener }
         );
+        this.downloadBar = downlaodBar;
+        this.drawBar = drawBar;
 
         return this;
     }
@@ -142,6 +156,9 @@ export class ScreepsWorldPrinter extends EventEmitter {
      */
     silence(): ScreepsWorldPrinter {
         this.logListener.forEach(({ event, listener }) => this.off(event, listener));
+
+        this.stopLogBar();
+        this.downloadBar = this.drawBar = undefined;
         return this;
     }
 
@@ -211,9 +228,15 @@ export class ScreepsWorldPrinter extends EventEmitter {
      * @returns 结果保存路径
      */
     async drawWorld(): Promise<string> {
-        const context = await this.createDrawContext();
-        const dataSet = await fetchWorld(context);
-        return await drawWorld(dataSet, context);
+        try {
+            const context = await this.createDrawContext();
+            const dataSet = await fetchWorld(context);
+            return await drawWorld(dataSet, context);
+        }
+        catch (e) {
+            this.stopLogBar();
+            throw e;
+        }
     }
 
     /**
@@ -224,8 +247,14 @@ export class ScreepsWorldPrinter extends EventEmitter {
      * @returns 下载好的世界绘制素材
      */
     async fetchWorld(): Promise<WorldDataSet> {
-        const context = await this.createDrawContext();
-        return await fetchWorld(context);
+        try {
+            const context = await this.createDrawContext();
+            return await fetchWorld(context);
+        }
+        catch (e) {
+            this.stopLogBar();
+            throw e;
+        }
     }
 
     /**
@@ -244,5 +273,10 @@ export class ScreepsWorldPrinter extends EventEmitter {
             cache: this.cache,
             emitter: this
         };
+    }
+
+    private stopLogBar(): void {
+        this.downloadBar && this.downloadBar.stop();
+        this.drawBar && this.drawBar.stop();
     }
 }

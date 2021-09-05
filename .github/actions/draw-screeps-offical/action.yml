@@ -20,7 +20,7 @@ runs:
     - name: Cache Draw Material
       uses: actions/cache@v2
       with:
-        path: .cache
+        path: .screeps-world-printer/cache
         key: material-cache-${{ inputs.shard-name }}
 
     - name: Install
@@ -35,4 +35,4 @@ runs:
     - uses: actions/upload-artifact@v2
       with:
         name: ${{ inputs.artifact-name }}
-        path: .dist
+        path: .screeps-world-printer/dist
