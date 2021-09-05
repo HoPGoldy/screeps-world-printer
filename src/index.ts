@@ -1,2 +1,2 @@
 export { getCentrosymmetricRoomNames, getDefaultServerRoomNames } from './utils';
-export { drawWorld } from './printer';
+export { ScreepsWorldPrinter } from './printer';

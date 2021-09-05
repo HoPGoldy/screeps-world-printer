@@ -108,3 +108,5 @@ dist
 .officeToken
 
 .dist/
+
+.test.js

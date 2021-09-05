@@ -1,6 +1,9 @@
+import { createHash } from "crypto";
+import { ensureDir } from "fs-extra";
+import path from "path";
 import { Sharp } from "sharp"
-import { DEFAULT_RETRY_TIME, RETRY_INTERVAL } from "./constant"
-import { MapSize, MapStatsResp, RoomStatus } from "./type"
+import { DEFAULT_RETRY_TIME, DIST_PATH, RETRY_INTERVAL } from "./constant"
+import { MapSize, MapStatsResp, ResultSaver, RoomStatus, ServerConnectInfo } from "./type"
 
 /**
  * 将地图视作一个中心对称的四象限布局来获取其房间名
@@ -106,4 +109,28 @@ export const fixRoomStats = function (roomStats: MapStatsResp): void {
             roomStats.stats[roomName].status = RoomStatus.Respawn;
         }
     }
+}
+
+export const defaultSaver = async function (connectInfo: ServerConnectInfo): Promise<ResultSaver> {
+    await ensureDir(DIST_PATH);
+    let savePath: string;
+
+    if ('shard' in connectInfo) {
+        savePath = connectInfo.shard;
+    }
+    else {
+        const hash = createHash('md5').update(connectInfo.host).digest('hex');
+        savePath = `drawResult${hash}`
+    }
+
+    const now = new Date();
+    savePath += `_${now.getFullYear()}-${now.getMonth()}-${now.getDate()}` +
+        `_${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.png`;
+
+    path.resolve(DIST_PATH, savePath);
+
+    return async result => {
+        await result.toFile(savePath)
+        return savePath;
+    };
 }

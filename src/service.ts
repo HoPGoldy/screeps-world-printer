@@ -1,23 +1,18 @@
 import axios, { AxiosInstance } from "axios";
 import { DEFAULT_ROOM_TILE_CDN, DEFAULT_TIMEOUT } from "./constant";
-import { GetMapStatsQuery, MapStatsResp, MapSize } from "./type";
+import { GetMapStatsQuery, MapStatsResp, MapSize, OfficalTokenConnectInfo, OfficalPasswordConnectInfo, PrivateConnectInfo, ServerConnectInfo } from "./type";
 import { retryWarpper } from "./utils";
 
-/** 官服连接配置项 */
-interface OfficeServerOptions {
-    /** 可以连接到官服的 token */
-    token: string
-    /** 要查询的 shard 名称 */
-    shard: string
-    /** 可选的房间瓦片 cdn 链接 */
-    roomTileCdn?: string
-}
 
 export class ScreepsService {
     /**
      * 服务器的访问地址
      */
     public readonly host: string
+    /**
+     * 目标是官服的话，要查询的 shard 名称
+     */
+    public shard: string | undefined
     /**
      * 执行查询的 axios 实例
      */
@@ -27,26 +22,44 @@ export class ScreepsService {
      */
     private roomTileCdn: string | undefined
     /**
-     * 目标是官服的话，要查询的 shard 名称
+     * 服务器连接信息
      */
-    private shard: string | undefined
+    private readonly connectInfo: ServerConnectInfo
 
     /**
      * 实例化 screeps 服务端请求器
-     * 
-     * @param baseURL 服务器访问地址（及端口）
-     * @param token 可以登陆该服务器的任意玩家 token
-     * @param roomTileCdn 可选，该服务器的房间瓦片 cdn 地址
      */
-    constructor(baseURL: string, opt?: OfficeServerOptions) {
-        this.host = baseURL;
-        this.http = axios.create({ baseURL });
+    constructor(opt: ServerConnectInfo) {
+        this.host = opt.host;
+        this.http = axios.create({ baseURL: opt.host });
         this.http.defaults.timeout = DEFAULT_TIMEOUT;
-        if (opt) {
-            this.http.defaults.headers['X-Token'] = opt.token;
+        this.connectInfo = opt;
+    }
+
+    /**
+     * 连接服务器
+     */
+    async connect(): Promise<void> {
+        const opt = this.connectInfo;
+        if ('token' in opt) {
+            this.setToken(opt.token);
             this.roomTileCdn = opt.roomTileCdn || DEFAULT_ROOM_TILE_CDN;
             this.shard = opt.shard;
         }
+        else if ('username' in this.connectInfo && 'password' in this.connectInfo) {
+            await this.login(opt.username, opt.password);
+        }
+        else throw new Error('无效的连接方式');
+    }
+
+    private async login(email: string, password: string) {
+        const resp = await this.http.post('api/auth/signin', { email, password });
+        console.log('🚀 ~ file: service.ts ~ line 59 ~ ScreepsService ~ login ~ resp', resp)
+
+    }
+
+    private setToken(newToken: string): void {
+        this.http.defaults.headers['X-Token'] = newToken;
     }
 
     /**
@@ -61,8 +74,9 @@ export class ScreepsService {
     /**
      * 根据房间名查询指定房间信息
      */
-    async getMapStats(data: GetMapStatsQuery): Promise<MapStatsResp> {
-        const resp = await this.http.post('api/game/map-stats', { ...data, statName: 'owner0' });
+    async getMapStats(rooms: string[]): Promise<MapStatsResp> {
+        const query = { rooms, shard: this.shard, statName: 'owner0' };
+        const resp = await this.http.post('api/game/map-stats', query);
         return resp.data;
     }
 

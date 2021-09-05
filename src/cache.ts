@@ -86,16 +86,16 @@ export class CacheManager {
      * 通过房间名获取瓦片缓存存放路径
      */
     private getRoomCachePath(roomName: string): string {
-        const hash = this.getHash(roomName)
-        return resolve(CACHE_PATH, `./${roomName}.${hash}.png`)
+        const hash = this.getHash(roomName);
+        return resolve(CACHE_PATH, `./${roomName}.${hash}.png`);
     }
 
     /**
      * 通过玩家信息获取头像缓存存放路径
      */
     private getBadgeCachePath(userInfo: UserInfo): string {
-        const hash = this.getHash(userInfo.username + JSON.stringify(userInfo.badge))
-        return resolve(CACHE_PATH, `./${userInfo.username}.${hash}.svg`)
+        const hash = this.getHash(userInfo.username + JSON.stringify(userInfo.badge));
+        return resolve(CACHE_PATH, `./${userInfo.username}.${hash}.svg`);
     }
 
     /**
@@ -104,7 +104,7 @@ export class CacheManager {
      * 为了防止重名导致错误使用其他服务器的图片，这里会使用服务器访问地址进行唯一签名
      */
     private getHash(dataStr: string): string {
-        return createHash('md5').update(dataStr + this.mapKey).digest('hex')
+        return createHash('md5').update(dataStr + this.mapKey).digest('hex');
     }
 
     /**

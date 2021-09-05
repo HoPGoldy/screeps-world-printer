@@ -1,3 +1,8 @@
+import EventEmitter from "events"
+import { Sharp } from "sharp"
+import { CacheManager } from "./cache"
+import { ScreepsService } from "./service"
+
 /**
  * 地图尺寸
  */
@@ -182,7 +187,7 @@ export interface DrawWorldOptions {
      *     ['W1N2', 'W2N2', 'W3N2'],
      * ]
      */
-    getRoomNames: (size: MapSize) => Promise<string[][]>
+    getRoomNames: RoomNameGetter
     /**
      * 保存到的路径
      * 如：./.dist/result.png
@@ -214,4 +219,137 @@ export type DrawMaterial = {
      * 获取该房间的拥有者头像
      */
     getBadge?: () => Promise<Buffer>
+}
+
+
+/**
+ * 官服连接配置项
+ */
+export type OfficalTokenConnectInfo = OfficalConnectInfoBase & {
+    /**
+     * 可以连接到官服的 token
+     */
+    token: string
+}
+
+export type OfficalPasswordConnectInfo = OfficalConnectInfoBase & {
+    /**
+     * 登陆官服的用户名
+     */
+    username: string
+    /**
+     * 登陆官服的密码
+     */
+    password: string
+}
+
+interface OfficalConnectInfoBase {
+    /**
+     * 官服网址，包含协议及域名
+     */
+    host: string
+    /**
+     * 要查询的 shard 名称
+     */
+    shard: string
+    /**
+     * 可选的房间瓦片 cdn 链接
+     */
+    roomTileCdn?: string
+}
+
+export type RoomNameGetter = (size: MapSize) => Promise<string[][]> | string[][]
+
+export type RoomDrawer = (material: DrawMaterial) => Promise<Buffer> | Buffer
+
+export type ResultSaver = (result: Sharp) => Promise<string> | string
+
+export interface DrawContext {
+    getRoomNames: RoomNameGetter
+    drawRoom: RoomDrawer
+    saveResult: ResultSaver
+    service: ScreepsService
+    cache: CacheManager
+    emitter: EventEmitter
+}
+
+export interface WorldDataSet {
+    roomMaterialMatrix: DrawMaterial[][]
+    mapSize: MapSize
+    roomStats: MapStatsResp
+}
+
+export interface PrivateConnectInfo {
+    /**
+     * 私服网址，包含协议、ip 及端口号
+     */
+    host: string
+    /**
+     * 登陆私服的用户名
+     */
+    username: string
+    /**
+     * 登陆私服的密码
+     */
+    password: string
+}
+
+export type ServerConnectInfo = OfficalTokenConnectInfo | OfficalPasswordConnectInfo | PrivateConnectInfo
+
+export enum PrintEvent {
+    Process = 'process',
+    Download = 'download',
+    Draw = 'draw'
+}
+
+export enum ProcessType {
+    BeforeFetchSize = 'beforeFetchSize',
+    AfterFetchSize = 'afterFetchSize',
+    BeforeFetchWorld = 'beforeFetchWorld',
+    AfterFetchWorld = 'afterFetchWorld',
+    BeforeDownload = 'beforeDownload',
+    AfterDownload = 'afterDownload',
+    BeforeDraw = 'beforeDraw',
+    AfterDraw = 'afterDraw',
+    BeforeSave = 'beforeSave',
+    AfterSave = 'afterSave'
+}
+
+export interface ProcessParam {
+    [ProcessType.BeforeFetchSize]: {
+        host: string
+        shard?: string
+    },
+    [ProcessType.AfterFetchSize]: {
+        
+    },
+    [ProcessType.BeforeFetchWorld]: {
+        mapSize: MapSize
+    },
+    [ProcessType.AfterFetchWorld]: {
+        
+    },
+    [ProcessType.BeforeDownload]: {
+        roomStats: MapStatsResp
+    },
+    [ProcessType.AfterDownload]: {
+        
+    },
+    [ProcessType.BeforeDraw]: {
+        dataSet: WorldDataSet
+    },
+    [ProcessType.AfterDraw]: {
+        
+    },
+    [ProcessType.BeforeSave]: {
+        result: Sharp
+    }
+    [ProcessType.AfterSave]: {
+        savePath: string
+    }
+}
+
+export interface OnProcessParam<EventType extends ProcessType = ProcessType> {
+    event: EventType
+    data: ProcessParam[EventType]
 }
