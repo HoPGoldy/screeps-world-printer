@@ -18,7 +18,7 @@ export const BADGE_RESIZE_WITH_LEVEL: { [level: number]: number } = {
     2: 0.3,
     1: 0.25,
     0: 0.25
-}
+};
 
 /** 默认的官服地图瓦片 cdn */
 export const DEFAULT_ROOM_TILE_CDN = 'https://d3os7yery2usni.cloudfront.net';

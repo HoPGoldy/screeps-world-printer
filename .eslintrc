@@ -1,0 +1,31 @@
+{
+
+    "parser":  "@typescript-eslint/parser",
+    "parserOptions": {
+        "sourceType": "module",
+        "project": "./tsconfig.json"
+    },
+    "extends": [
+        "standard-with-typescript",
+        "plugin:@typescript-eslint/eslint-recommended",
+        "plugin:@typescript-eslint/recommended"
+    ],
+    "plugins": [
+        "@typescript-eslint"
+    ],
+    "rules": {
+        "@typescript-eslint/indent": ["error", 4],
+        "indent": ["error", 4],
+        "@typescript-eslint/semi": ["error", "always"],
+        "semi": "off",
+        "@typescript-eslint/no-misused-promises": ["error", { "checksVoidReturn": false }],
+        "@typescript-eslint/strict-boolean-expressions": "off",
+        "brace-style": "off",
+        "@typescript-eslint/brace-style": ["error", "stroustrup"],
+        "@typescript-eslint/no-explicit-any": ["error", { "ignoreRestArgs": true }]
+    },
+    "ignorePatterns": ["/example"],
+    "env": {
+        "node": true
+    }
+}

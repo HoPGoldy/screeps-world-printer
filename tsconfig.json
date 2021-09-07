@@ -18,8 +18,9 @@
     "sourceMap": true,
     "inlineSourceMap": false,
     "inlineSources": true,
-    "declaration": false,
+    "declaration": true,
     "noEmit": false,
-    "outDir": "./.ts-node"
-  }
+    "outDir": "./dist"
+  },
+  "include": ["src/**/*.ts"],
 }

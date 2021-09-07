@@ -1,7 +1,7 @@
-import EventEmitter from "events"
-import { Sharp } from "sharp"
-import { CacheManager } from "./cache"
-import { ScreepsService } from "./service"
+import EventEmitter from 'events';
+import { Sharp } from 'sharp';
+import { CacheManager } from './cache';
+import { ScreepsService } from './service';
 
 /**
  * 地图尺寸
@@ -148,7 +148,7 @@ export interface MapStatsResp {
      * 所有查询的房间信息
      */
     stats: {
-        [roomName: string]: RoomInfo
+        [roomName: string]: RoomInfo | undefined
     }
     /**
      * 所有查询的房间所有者信息
@@ -180,7 +180,7 @@ export interface DrawWorldOptions {
     roomTileCdn?: string
     /**
      * 异步方法：获取大地图的房间信息
-     * 
+     *
      * 由于每个服务器的房间配置都不一样，因此提供这个函数来获取服务器的具体房间配置项，返回一个二维的房间名数组（第一维代表纵坐标，第二维代表横坐标）：
      * [
      *     ['W1N1', 'W2N1', 'W3N1'],
@@ -192,7 +192,7 @@ export interface DrawWorldOptions {
      * 保存到的路径
      * 如：./.dist/result.png
      * 需要自行确保该路径存在
-     * 
+     *
      * @param host 上面传入的服务器地址
      * @param shard 上面传入的镜面名称
      */
@@ -202,7 +202,7 @@ export interface DrawWorldOptions {
 /**
  * 房间绘制素材
  */
-export type DrawMaterial = {
+export interface DrawMaterial {
     /**
      * 房间名称
      */
@@ -221,7 +221,6 @@ export type DrawMaterial = {
     getBadge?: () => Promise<Buffer>
 }
 
-
 /**
  * 官服连接配置项
  */
@@ -230,7 +229,7 @@ export type OfficalTokenConnectInfo = OfficalConnectInfoBase & {
      * 可以连接到官服的 token
      */
     token: string
-}
+};
 
 export type OfficalPasswordConnectInfo = OfficalConnectInfoBase & {
     /**
@@ -241,7 +240,7 @@ export type OfficalPasswordConnectInfo = OfficalConnectInfoBase & {
      * 登陆官服的密码
      */
     password: string
-}
+};
 
 interface OfficalConnectInfoBase {
     /**
@@ -258,11 +257,11 @@ interface OfficalConnectInfoBase {
     roomTileCdn?: string
 }
 
-export type RoomNameGetter = (size: MapSize) => Promise<string[][]> | string[][]
+export type RoomNameGetter = (size: MapSize) => Promise<string[][]> | string[][];
 
-export type RoomDrawer = (material: DrawMaterial) => Promise<Buffer> | Buffer
+export type RoomDrawer = (material: DrawMaterial) => Promise<Buffer> | Buffer;
 
-export type ResultSaver = (result: Sharp) => Promise<string> | string
+export type ResultSaver = (result: Sharp) => Promise<string> | string;
 
 export interface DrawContext {
     getRoomNames: RoomNameGetter
@@ -294,15 +293,14 @@ export interface PrivateConnectInfo {
     password: string
 }
 
-export type ServerConnectInfo = OfficalTokenConnectInfo | OfficalPasswordConnectInfo | PrivateConnectInfo
+export type ServerConnectInfo = OfficalTokenConnectInfo | OfficalPasswordConnectInfo | PrivateConnectInfo;
 
 export enum PrintEvent {
-    Process = 'process',
     Download = 'download',
     Draw = 'draw'
 }
 
-export enum ProcessType {
+export enum ProcessEvent {
     BeforeFetchSize = 'beforeFetchSize',
     AfterFetchSize = 'afterFetchSize',
     BeforeFetchWorld = 'beforeFetchWorld',
@@ -316,40 +314,44 @@ export enum ProcessType {
 }
 
 export interface ProcessParam {
-    [ProcessType.BeforeFetchSize]: {
+    [ProcessEvent.BeforeFetchSize]: {
         host: string
         shard?: string
-    },
-    [ProcessType.AfterFetchSize]: {
-        
-    },
-    [ProcessType.BeforeFetchWorld]: {
+    }
+    [ProcessEvent.AfterFetchSize]: {
+
+    }
+    [ProcessEvent.BeforeFetchWorld]: {
         mapSize: MapSize
-    },
-    [ProcessType.AfterFetchWorld]: {
-        
-    },
-    [ProcessType.BeforeDownload]: {
+    }
+    [ProcessEvent.AfterFetchWorld]: {
+
+    }
+    [ProcessEvent.BeforeDownload]: {
         roomStats: MapStatsResp
-    },
-    [ProcessType.AfterDownload]: {
-        
-    },
-    [ProcessType.BeforeDraw]: {
+    }
+    [ProcessEvent.AfterDownload]: {
+
+    }
+    [ProcessEvent.BeforeDraw]: {
         dataSet: WorldDataSet
-    },
-    [ProcessType.AfterDraw]: {
-        
-    },
-    [ProcessType.BeforeSave]: {
+    }
+    [ProcessEvent.AfterDraw]: {
+
+    }
+    [ProcessEvent.BeforeSave]: {
         result: Sharp
     }
-    [ProcessType.AfterSave]: {
+    [ProcessEvent.AfterSave]: {
         savePath: string
     }
 }
 
-export interface OnProcessParam<EventType extends ProcessType = ProcessType> {
+export interface OnProcessParam<EventType extends ProcessEvent = ProcessEvent> {
     event: EventType
     data: ProcessParam[EventType]
 }
+
+export type ProcessCallbacks = {
+    [eventType in ProcessEvent]?: (event: ProcessParam[eventType]) => unknown;
+};
