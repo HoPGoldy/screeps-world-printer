@@ -12,7 +12,7 @@ type DrawProcessor = (roomTile: Sharp, material: DrawMaterial) => Promise<Overla
  * @param material 房间绘制素材
  * @returns 单个房间的最终图像 Buffer
  */
-export const drawRoom = async function (material: DrawMaterial): Promise<Buffer> {
+export const defaultRoomDrawer = async function (material: DrawMaterial): Promise<Buffer> {
     const roomTile = sharp(await material.getRoom());
     // 蒙版在前，头像在后，不然头像会被蒙版盖住
     const pipeline = [maskProcessor, badgeProcessor];

@@ -1,4 +1,4 @@
-import { drawRoom } from "../src/drawRoom";
+import { defaultRoomDrawer } from "../src/drawRoom";
 import { DrawMaterial, RoomStatus } from "../src/type";
 import { promises as fsPromise } from 'fs';
 import sharp from "sharp";
@@ -58,7 +58,7 @@ fs.ensureDirSync(DIST_PATH);
 
 const run = async function () {
     await Promise.all(allTileType.map(info => {
-        return drawRoom(materialCreator(info)).then(result => {
+        return defaultRoomDrawer(materialCreator(info)).then(result => {
             return sharp(result).toFile(`${DIST_PATH}/${info.name}.png`)
         })
     }))

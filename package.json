@@ -6,7 +6,8 @@
     "lint": "eslint src/** && tsc --noEmit",
     "test-unit": "jest --coverage"
   },
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "repository": "git@github.com:HoPGoldy/screeps-world-printer.git",
   "author": "HoPGoldy <hpgless@outlook.com>",
   "license": "MIT",

@@ -1,8 +1,9 @@
 import { Presets, SingleBar } from 'cli-progress';
 import EventEmitter from 'events';
+import { getCentrosymmetricRoomNames, getDefaultServerRoomNames } from '.';
 import { CacheManager } from './cache';
 import { drawWorld, fetchWorld } from './core';
-import { drawRoom } from './drawRoom';
+import { defaultRoomDrawer } from './drawRoom';
 import { ScreepsService } from './service';
 import {
     DrawContext, DrawMaterial, PrintEvent, ProcessCallbacks, ProcessEvent, ResultSaver,
@@ -27,7 +28,7 @@ export class ScreepsWorldPrinter extends EventEmitter {
     /**
      * 房间绘制器
      */
-    private roomDrawer: RoomDrawer = drawRoom;
+    private roomDrawer: RoomDrawer = defaultRoomDrawer;
 
     /**
      * 结果保存器
@@ -67,12 +68,18 @@ export class ScreepsWorldPrinter extends EventEmitter {
      * 实例化地图绘对象
      *
      * @param connectInfo 服务器连接信息
-     * @param getRoomNames 从世界尺寸获取房间名二维数组的异步函数
+     * @param getRoomNames 房间名解析器，从世界尺寸获取房间名二维数组的异步函数
      */
-    constructor (connectInfo: ServerConnectInfo, roomNameGetter: RoomNameGetter) {
+    constructor (connectInfo: ServerConnectInfo, roomNameGetter?: RoomNameGetter) {
         super();
 
-        this.roomNameGetter = roomNameGetter;
+        if (roomNameGetter) this.roomNameGetter = roomNameGetter;
+        else {
+            // 根据连接信息选用默认的房间名解析器
+            this.roomNameGetter = ('token' in connectInfo || 'shard' in connectInfo)
+                ? getCentrosymmetricRoomNames
+                : getDefaultServerRoomNames;
+        }
         this.connectInfo = connectInfo;
 
         this.service = new ScreepsService(connectInfo);
@@ -269,6 +276,9 @@ export class ScreepsWorldPrinter extends EventEmitter {
         };
     }
 
+    /**
+     * 停止日志进度条输出（如果开启了的话）
+     */
     private stopLogBar (): void {
         this.downloadBar?.stop();
         this.drawBar?.stop();
