@@ -1,6 +1,6 @@
 import sharp, { OverlayOptions } from 'sharp';
 // import { writeJSON, readJSON } from 'fs-extra';
-import { MapStatsResp, DrawMaterial, UserInfo, PrintEvent, ProcessEvent, WorldDataSet, DrawContext } from './type';
+import { MapStatsResp, DrawMaterial, PlayerInfo, PrintEvent, ProcessEvent, WorldDataSet, DrawContext } from './type';
 import { map, mapLimit } from 'async';
 import { PIXEL_LIMIT, ROOM_SIZE } from './constant';
 import { fixRoomStats } from './utils';
@@ -106,12 +106,12 @@ const materialCreatorFactory = function (
     /**
      * 从缓存 / 服务器获取玩家头像
      */
-    const createBadgeGetter = async function (userInfo: UserInfo): Promise<() => Promise<Buffer>> {
-        const badgeGetter = await cache.createBadgeGetter(userInfo);
+    const createBadgeGetter = async function (playerInfo: PlayerInfo): Promise<() => Promise<Buffer>> {
+        const badgeGetter = await cache.createBadgeGetter(playerInfo);
         if (badgeGetter) return badgeGetter;
 
-        const badgeSvg = await service.getBadge(userInfo.username);
-        return await cache.setBadge(userInfo, badgeSvg);
+        const badgeSvg = await service.getBadge(playerInfo.username);
+        return await cache.setBadge(playerInfo, badgeSvg);
     };
 
     /**

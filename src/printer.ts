@@ -8,7 +8,7 @@ import {
     DrawContext, DrawMaterial, PrintEvent, ProcessCallbacks, ProcessEvent, ResultSaver,
     RoomDrawer, RoomNameGetter, ServerConnectInfo, WorldDataSet
 } from './type';
-import { defaultSaver } from './utils';
+import { getDefaultSaver } from './utils';
 
 /**
  * 绘制 screeps 世界地图
@@ -257,7 +257,7 @@ export class ScreepsWorldPrinter extends EventEmitter {
     private async createDrawContext (): Promise<DrawContext> {
         const saveResult = this.resultSaver
             ? this.resultSaver
-            : await defaultSaver(this.connectInfo);
+            : await getDefaultSaver(this.connectInfo);
 
         return {
             getRoomNames: this.roomNameGetter,

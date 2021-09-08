@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import { DEFAULT_ROOM_TILE_CDN, DEFAULT_TIMEOUT } from './constant';
 import { MapStatsResp, MapSize, ServerConnectInfo } from './type';
-import { retryWarpper } from './utils';
+import { retryWrapper } from './utils';
 
 export class ScreepsService {
     /**
@@ -85,7 +85,7 @@ export class ScreepsService {
      * @param username 玩家名
      */
     async getBadge (username: string): Promise<Buffer> {
-        const fetch = retryWarpper<Buffer>(async (username: string) => {
+        const fetch = retryWrapper<Buffer>(async (username: string) => {
             const resp = await this.http.get<string>(`api/user/badge-svg?username=${username}`);
             // 对头像进行修复，原来的头像会有一点偏
             const fixedSvg = resp.data.replace('<circle cx="50" cy="50" r="52" />', '<circle cx="50" cy="50" r="50" />');
@@ -104,7 +104,7 @@ export class ScreepsService {
      * @param roomName 房间名
      */
     async getRoomTile (roomName: string): Promise<Buffer> {
-        const fetch = retryWarpper(async (roomName: string) => {
+        const fetch = retryWrapper(async (roomName: string) => {
             const base = this.roomTileCdn ?? this.http.defaults.baseURL;
             // 这里还需要对私服进行适配
             // eslint-disable-next-line @typescript-eslint/restrict-template-expressions

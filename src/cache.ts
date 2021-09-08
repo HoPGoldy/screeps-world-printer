@@ -1,4 +1,4 @@
-import { UserInfo } from './type';
+import { PlayerInfo } from './type';
 import { promises as fsPromise } from 'fs';
 import fs from 'fs-extra';
 import { CACHE_PATH } from './constant';
@@ -12,6 +12,7 @@ import sharp, { Sharp } from 'sharp';
  */
 export class CacheManager {
     public readonly mapKey: string;
+    public readonly cachePath: string;
 
     /**
      * 实例化缓存管理器
@@ -20,10 +21,11 @@ export class CacheManager {
      *
      * @param mapKey 服务器识别信息
      */
-    constructor (mapKey: string) {
+    constructor (mapKey: string, cachePath = CACHE_PATH) {
         this.mapKey = mapKey;
         // 确保缓存文件夹存在
-        fs.ensureDirSync(CACHE_PATH);
+        fs.ensureDirSync(cachePath);
+        this.cachePath = cachePath;
     }
 
     /**
@@ -48,8 +50,8 @@ export class CacheManager {
      * @param roomName 要查询的玩家头像
      * @returns 获取玩家头像 Buffer 的异步函数
      */
-    async createBadgeGetter (userInfo: UserInfo): Promise<(() => Promise<Buffer>) | undefined> {
-        const filePath = this.getBadgeCachePath(userInfo);
+    async createBadgeGetter (playerInfo: PlayerInfo): Promise<(() => Promise<Buffer>) | undefined> {
+        const filePath = this.getBadgeCachePath(playerInfo);
         const exists = await fs.pathExists(filePath);
         if (!exists) return undefined;
 
@@ -72,11 +74,11 @@ export class CacheManager {
     /**
      * 缓存指定玩家头像
      *
-     * @param userInfo 玩家信息
+     * @param playerInfo 玩家信息
      * @param badgeSvg 玩家头像
      */
-    async setBadge (userInfo: UserInfo, badgeSvg: Buffer): Promise<() => Promise<Buffer>> {
-        const filePath = this.getBadgeCachePath(userInfo);
+    async setBadge (playerInfo: PlayerInfo, badgeSvg: Buffer): Promise<() => Promise<Buffer>> {
+        const filePath = this.getBadgeCachePath(playerInfo);
         await sharp(badgeSvg).toFile(filePath);
 
         return async () => await fsPromise.readFile(filePath);
@@ -87,15 +89,15 @@ export class CacheManager {
      */
     private getRoomCachePath (roomName: string): string {
         const hash = this.getHash(roomName);
-        return resolve(CACHE_PATH, `./${roomName}.${hash}.png`);
+        return resolve(this.cachePath, `./${roomName}.${hash}.png`);
     }
 
     /**
      * 通过玩家信息获取头像缓存存放路径
      */
-    private getBadgeCachePath (userInfo: UserInfo): string {
-        const hash = this.getHash(userInfo.username + JSON.stringify(userInfo.badge));
-        return resolve(CACHE_PATH, `./${userInfo.username}.${hash}.svg`);
+    private getBadgeCachePath (playerInfo: PlayerInfo): string {
+        const hash = this.getHash(playerInfo.username + JSON.stringify(playerInfo.badge));
+        return resolve(this.cachePath, `./${playerInfo.username}.${hash}.svg`);
     }
 
     /**
@@ -109,6 +111,7 @@ export class CacheManager {
 
     /**
      * 将地图行结果缓存起来
+     * 由于后面就直接执行拼接了，拼接时可以接受文件路径，所以这里就不返回 buffer 访问器了
      *
      * @param roomNames 该地图行包含的房间名称
      * @param mapRowSharp 地图行 sharp 对象
@@ -116,7 +119,7 @@ export class CacheManager {
      */
     public async setMapRow (roomNames: string[], mapRowSharp: Sharp): Promise<string> {
         const mapRowHash = this.getHash(roomNames.join(','));
-        const rowSavePath = resolve(CACHE_PATH, `./mapRow.${mapRowHash}.png`);
+        const rowSavePath = resolve(this.cachePath, `./mapRow.${mapRowHash}.png`);
 
         await mapRowSharp.png().toFile(rowSavePath);
         return rowSavePath;

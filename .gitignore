@@ -110,3 +110,5 @@ dist
 .test.js
 
 .screeps-world-printer/
+
+.unit-test-*

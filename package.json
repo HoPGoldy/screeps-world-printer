@@ -2,8 +2,9 @@
   "name": "screeps-world-printer",
   "version": "1.0.0",
   "scripts": {
-    "build": "tsc",
-    "lint": "eslint src/** && tsc --noEmit"
+    "build": "tsc --project tsconfig.build.json",
+    "lint": "eslint src/** && tsc --noEmit",
+    "test-unit": "jest --coverage"
   },
   "main": "index.js",
   "repository": "git@github.com:HoPGoldy/screeps-world-printer.git",
@@ -20,6 +21,7 @@
     "@types/async": "^3.2.7",
     "@types/cli-progress": "^3.9.2",
     "@types/fs-extra": "^9.0.12",
+    "@types/jest": "^27.0.1",
     "@types/node": "^16.3.3",
     "@types/sharp": "^0.28.4",
     "@typescript-eslint/eslint-plugin": "^4.30.0",
@@ -29,6 +31,8 @@
     "eslint-plugin-import": "^2.24.2",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.1.0",
+    "jest": "^27.1.0",
+    "ts-jest": "^27.0.5",
     "ts-node": "^10.1.0",
     "tslib": "^2.3.0",
     "typescript": "^4.4.2"

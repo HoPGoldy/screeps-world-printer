@@ -13,16 +13,18 @@ import { MapSize, MapStatsResp, ResultSaver, RoomStatus, ServerConnectInfo } fro
  * @returns 房间名二维数组
  */
 export const getCentrosymmetricRoomNames = async function ({ height, width }: MapSize): Promise<string[][]> {
-    const helfWidth = Math.floor(width / 2);
+    if (height % 2 !== 0 || width % 2 !== 0) {
+        throw new Error(`四象限布局需要地图尺寸为偶数，但是接收的地图尺寸为：height ${height} width ${width}`);
+    }
+
     const xSectors = [
-        ...Array.from({ length: helfWidth }).map((_, x) => `W${x}`).reverse(),
-        ...Array.from({ length: helfWidth }).map((_, x) => `E${x}`)
+        ...Array.from({ length: width / 2 }).map((_, x) => `W${x}`).reverse(),
+        ...Array.from({ length: width / 2 }).map((_, x) => `E${x}`)
     ];
 
-    const helfHeight = Math.floor(height / 2);
     const ySectors = [
-        ...Array.from({ length: helfHeight }).map((_, x) => `N${x}`).reverse(),
-        ...Array.from({ length: helfHeight }).map((_, x) => `S${x}`)
+        ...Array.from({ length: height / 2 }).map((_, x) => `N${x}`).reverse(),
+        ...Array.from({ length: height / 2 }).map((_, x) => `S${x}`)
     ];
 
     return ySectors.map(yRoomName => xSectors.map(xRoomName => xRoomName + yRoomName));
@@ -30,10 +32,11 @@ export const getCentrosymmetricRoomNames = async function ({ height, width }: Ma
 
 /**
  * 获取 steam 版 screeps 启动的默认服务器的房间名数组
+ * 即只生成 WN 象限，右下角为原点 W0N0
  */
-export const getDefaultServerRoomNames = async function (): Promise<string[][]> {
-    const xSectors = Array.from({ length: 11 }).map((_, x) => `W${x}`).reverse();
-    const ySectors = Array.from({ length: 11 }).map((_, x) => `N${x}`).reverse();
+export const getDefaultServerRoomNames = async function ({ height, width }: MapSize): Promise<string[][]> {
+    const xSectors = Array.from({ length: height }).map((_, x) => `W${x}`).reverse();
+    const ySectors = Array.from({ length: width }).map((_, x) => `N${x}`).reverse();
 
     return ySectors.map(yRoomName => xSectors.map(xRoomName => xRoomName + yRoomName));
 };
@@ -46,10 +49,12 @@ export const getDefaultServerRoomNames = async function (): Promise<string[][]> 
  * @param {number} retryInterval 重试间隔时常
  * @returns 会自动进行错误重试的异步函数
  */
-export const retryWarpper = function <T>(
-    asyncFunc: (...args: any[]) => Promise<T>
+export const retryWrapper = function <T>(
+    asyncFunc: (...args: any[]) => Promise<T>,
+    defaultRetryTime = DEFAULT_RETRY_TIME,
+    retryInterval = RETRY_INTERVAL
 ): (...args: any[]) => Promise<T> {
-    let retryTime = DEFAULT_RETRY_TIME;
+    let retryTime = defaultRetryTime;
 
     const retryCallback = async function (...args: any[]): Promise<T> {
         try {
@@ -60,7 +65,7 @@ export const retryWarpper = function <T>(
 
             // console.log(`${args} 查询失败，正在重试(${DEFAULT_RETRY_TIME - retryTime}/${DEFAULT_RETRY_TIME})`)
             retryTime -= 1;
-            await new Promise(resolve => setTimeout(resolve, RETRY_INTERVAL, true));
+            await new Promise(resolve => setTimeout(resolve, retryInterval, true));
             return await retryCallback(...args);
         }
     };
@@ -70,6 +75,9 @@ export const retryWarpper = function <T>(
 
 /**
  * 给图片添加透明度
+ * 由于 sharp.ensureAlpha 只会为没有透明通道的图片添加透明通道
+ * 当一个图片已经有透明通道时是无法使用该方法调整透明度的
+ * 这里用的方法来自 @see https://github.com/lovell/sharp/issues/618#issuecomment-532293211
  *
  * @param sharp 要添加的图片
  * @param opacity 透明度 0 - 255，255 是完全不透明
@@ -102,12 +110,14 @@ export const fixRoomStats = function (roomStats: MapStatsResp): void {
     for (const roomName in roomStats.stats) {
         const roomInfo = roomStats.stats[roomName];
 
+        if (!roomInfo || roomInfo.status === RoomStatus.Inactivated) continue;
+
         // 存在新手区并且还没有结束，设置为新手区状态
-        if (roomInfo && (roomInfo.novice ?? 0) >= nowTimestamp) {
+        if ((roomInfo.novice ?? 0) >= nowTimestamp) {
             roomInfo.status = RoomStatus.Novice;
         }
         // 存在重生区并且没有结束，设置为重生区
-        else if (roomInfo && (roomInfo.respawnArea ?? 0) >= nowTimestamp) {
+        else if ((roomInfo.respawnArea ?? 0) >= nowTimestamp) {
             roomInfo.status = RoomStatus.Respawn;
         }
     }
@@ -120,7 +130,7 @@ export const fixRoomStats = function (roomStats: MapStatsResp): void {
  * @param distPath 保存路径
  * @returns 执行保存，并返回保存路径的异步函数
  */
-export const defaultSaver = async function (connectInfo: ServerConnectInfo, distPath: string = DIST_PATH): Promise<ResultSaver> {
+export const getDefaultSaver = async function (connectInfo: ServerConnectInfo, distPath: string = DIST_PATH): Promise<ResultSaver> {
     await ensureDir(distPath);
     let saveName: string;
 
@@ -131,7 +141,7 @@ export const defaultSaver = async function (connectInfo: ServerConnectInfo, dist
     // 保存私服的名称前缀
     else {
         const hash = createHash('md5').update(connectInfo.host).digest('hex');
-        saveName = `drawResult${hash}`;
+        saveName = `drawResult.${hash}`;
     }
 
     // 添加时间戳后缀

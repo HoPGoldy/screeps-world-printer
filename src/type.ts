@@ -121,7 +121,7 @@ interface SignInfo {
 /**
  * 用户头像信息
  */
-interface UserBadge {
+export interface PlayerBadge {
     type: number
     color1: string
     color2: string
@@ -134,10 +134,10 @@ interface UserBadge {
  * 用户信息
  * 由 map/stats 接口获取
  */
-export interface UserInfo {
+export interface PlayerInfo {
     _id: string
     username: string
-    badge: UserBadge
+    badge: PlayerBadge
 }
 
 /**
@@ -154,7 +154,7 @@ export interface MapStatsResp {
      * 所有查询的房间所有者信息
      */
     users: {
-        [userId: string]: UserInfo
+        [userId: string]: PlayerInfo
     }
 }
 

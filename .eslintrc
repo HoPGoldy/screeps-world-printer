@@ -3,7 +3,7 @@
     "parser":  "@typescript-eslint/parser",
     "parserOptions": {
         "sourceType": "module",
-        "project": "./tsconfig.json"
+        "project": "./tsconfig.lint.json"
     },
     "extends": [
         "standard-with-typescript",
@@ -21,10 +21,11 @@
         "@typescript-eslint/no-misused-promises": ["error", { "checksVoidReturn": false }],
         "@typescript-eslint/strict-boolean-expressions": "off",
         "brace-style": "off",
+        "@typescript-eslint/no-floating-promises": "off",
         "@typescript-eslint/brace-style": ["error", "stroustrup"],
         "@typescript-eslint/no-explicit-any": ["error", { "ignoreRestArgs": true }]
     },
-    "ignorePatterns": ["/example"],
+    "ignorePatterns": ["/example", "jest.config.js"],
     "env": {
         "node": true
     }
