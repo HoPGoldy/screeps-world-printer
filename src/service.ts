@@ -52,14 +52,25 @@ export class ScreepsService {
         else throw new Error('无效的连接方式');
     }
 
+    /**
+     * 进行账号验证
+     *
+     * @param email 登陆玩家名
+     * @param password 玩家密码
+     */
     private async login (email: string, password: string): Promise<void> {
         const resp = await this.http.post('api/auth/signin', { email, password });
-        console.log('🚀 ~ file: service.ts ~ line 59 ~ ScreepsService ~ login ~ resp', resp);
-        this.setToken(resp.headers['X-Token']);
+        this.setToken(resp.data.token);
     }
 
+    /**
+     * 使用新令牌
+     *
+     * @param newToken 新的令牌
+     */
     private setToken (newToken: string): void {
         this.http.defaults.headers['X-Token'] = newToken;
+        this.http.defaults.headers['X-Username'] = newToken;
     }
 
     /**
@@ -105,10 +116,14 @@ export class ScreepsService {
      */
     async getRoomTile (roomName: string): Promise<Buffer> {
         const fetch = retryWrapper(async (roomName: string) => {
-            const base = this.roomTileCdn ?? this.http.defaults.baseURL;
-            // 这里还需要对私服进行适配
-            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-            const roomTile = await axios.get<Buffer>(`${base}/map/${this.shard}/${roomName}.png`, {
+            const base = this.roomTileCdn ?? this.http.defaults.baseURL ?? '';
+
+            // 官服和私服的瓦片存放路径不一样，这里用是否有 shard 区分官服和私服
+            const fullPath = this.shard
+                ? `${base}/map/${this.shard}/${roomName}.png`
+                : `${base}/assets/map/${roomName}.png`;
+
+            const roomTile = await axios.get<Buffer>(fullPath, {
                 timeout: DEFAULT_TIMEOUT,
                 responseType: 'arraybuffer'
             });

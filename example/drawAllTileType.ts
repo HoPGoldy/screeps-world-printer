@@ -63,7 +63,7 @@ const run = async function () {
         })
     }))
 
-    console.log('绘制结束');
+    console.log(`绘制完成，结果保存至 ${DIST_PATH}`);
 }
 
 run();
