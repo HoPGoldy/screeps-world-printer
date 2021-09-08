@@ -30,7 +30,7 @@ runs:
     - name: Draw Map
       shell: bash
       run: |
-        npm run draw-offical -- --token=${{ inputs.screeps-token }} --shard=${{ inputs.shard-name }}
+        npx ts-node example/drawOffical.ts --files --token=${{ inputs.screeps-token }} --shard=${{ inputs.shard-name }}
 
     - uses: actions/upload-artifact@v2
       with:
