@@ -117,8 +117,8 @@ export class ScreepsWorldPrinter extends EventEmitter {
             [ProcessEvent.AfterDownload]: () => downlaodBar.stop(),
             [ProcessEvent.BeforeDraw]: ({ dataSet }) => {
                 console.log('正在绘制地图');
-                const { width, height } = dataSet.mapSize;
-                drawBar.start(width * height, 0);
+                const total = dataSet.roomMaterialMatrix.reduce((total, row) => total + row.length, 0);
+                drawBar.start(total, 0);
             },
             [ProcessEvent.AfterDraw]: () => drawBar.stop(),
             [ProcessEvent.BeforeSave]: () => {

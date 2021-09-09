@@ -219,7 +219,19 @@ export interface DrawMaterial {
      * 获取该房间的拥有者头像
      */
     getBadge?: () => Promise<Buffer>
+    /**
+     * 获取图层蒙版
+     * @param type 蒙版类型
+     * @param width 蒙版的长度
+     * @param height 蒙版的宽度
+     */
+    getMask: (type: MaskType, width?: number, height?: number) => Promise<Buffer>
 }
+
+/**
+ * 蒙版类型
+ */
+export type MaskType = RoomStatus.Inactivated | RoomStatus.Novice | RoomStatus.Respawn;
 
 /**
  * 官服连接配置项
@@ -257,11 +269,11 @@ interface OfficalConnectInfoBase {
     roomTileCdn?: string
 }
 
-export type RoomNameGetter = (size: MapSize) => Promise<string[][]> | string[][];
+export type RoomNameGetter = (size: MapSize) => Promise<Array<Array<string | undefined>>>;
 
-export type RoomDrawer = (material: DrawMaterial) => Promise<Buffer> | Buffer;
+export type RoomDrawer = (material: DrawMaterial | undefined) => Promise<Buffer | undefined>;
 
-export type ResultSaver = (result: Sharp) => Promise<string> | string;
+export type ResultSaver = (result: Sharp) => Promise<string>;
 
 export interface DrawContext {
     getRoomNames: RoomNameGetter
@@ -273,7 +285,7 @@ export interface DrawContext {
 }
 
 export interface WorldDataSet {
-    roomMaterialMatrix: DrawMaterial[][]
+    roomMaterialMatrix: Array<Array<DrawMaterial | undefined>>
     mapSize: MapSize
     roomStats: MapStatsResp
 }
@@ -345,11 +357,6 @@ export interface ProcessParam {
     [ProcessEvent.AfterSave]: {
         savePath: string
     }
-}
-
-export interface OnProcessParam<EventType extends ProcessEvent = ProcessEvent> {
-    event: EventType
-    data: ProcessParam[EventType]
 }
 
 export type ProcessCallbacks = {

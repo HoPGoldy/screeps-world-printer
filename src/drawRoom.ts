@@ -1,5 +1,5 @@
 import sharp, { Sharp, OverlayOptions } from 'sharp';
-import { BADGE_RESIZE_WITH_LEVEL, ROOM_MASK_COLORS } from './constant';
+import { BADGE_RESIZE_WITH_LEVEL } from './constant';
 import { DrawMaterial, RoomStatus } from './type';
 import { addOpacity } from './utils';
 import { map } from 'async';
@@ -12,7 +12,9 @@ type DrawProcessor = (roomTile: Sharp, material: DrawMaterial) => Promise<Overla
  * @param material 房间绘制素材
  * @returns 单个房间的最终图像 Buffer
  */
-export const defaultRoomDrawer = async function (material: DrawMaterial): Promise<Buffer> {
+export const defaultRoomDrawer = async function (material: DrawMaterial | undefined): Promise<Buffer | undefined> {
+    if (!material) return undefined;
+
     const roomTile = sharp(await material.getRoom());
     // 蒙版在前，头像在后，不然头像会被蒙版盖住
     const pipeline = [maskProcessor, badgeProcessor];
@@ -37,14 +39,9 @@ const maskProcessor: DrawProcessor = async function (roomTile, material) {
     if (!roomTileWidth || !roomTileHeight) {
         throw new Error(`无效的房间瓦片尺寸 ${material.roomName} ${roomTileWidth ?? ''} ${roomTileHeight ?? ''}`);
     }
-    // 使用配置的背景色
-    const background = ROOM_MASK_COLORS[material.roomInfo.status];
-    // 添加一个半透明的纯色蒙版
-    const mask = sharp({
-        create: { width: roomTileWidth, height: roomTileHeight, channels: 3, background }
-    }).ensureAlpha(0.5).png();
 
-    return { input: await mask.toBuffer(), blend: 'atop' };
+    const input = await material.getMask(material.roomInfo.status);
+    return { input, blend: 'atop' };
 };
 
 /**

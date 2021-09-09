@@ -117,7 +117,7 @@ export class CacheManager {
      * @param mapRowSharp 地图行 sharp 对象
      * @returns 保存到的路径
      */
-    public async setMapRow (roomNames: string[], mapRowSharp: Sharp): Promise<string> {
+    public async setMapRow (roomNames: Array<string | undefined>, mapRowSharp: Sharp): Promise<string> {
         const mapRowHash = this.getHash(roomNames.join(','));
         const rowSavePath = resolve(this.cachePath, `./mapRow.${mapRowHash}.png`);
 

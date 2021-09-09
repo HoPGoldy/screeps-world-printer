@@ -1,5 +1,6 @@
 import { defaultRoomDrawer } from "../src/drawRoom";
 import { DrawMaterial, RoomStatus } from "../src/type";
+import { getMask } from '../src/utils';
 import { promises as fsPromise } from 'fs';
 import sharp from "sharp";
 import fs from 'fs-extra';
@@ -43,6 +44,7 @@ const materialCreator = function (info: TileInfo): DrawMaterial {
     const material: DrawMaterial = {
         roomName: '',
         roomInfo: { status: info.status },
+        getMask,
         getRoom: () => fsPromise.readFile(TILE_PATH)
     }
 

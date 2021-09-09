@@ -1,9 +1,9 @@
 import { createHash } from 'crypto';
 import { ensureDir } from 'fs-extra';
 import path from 'path';
-import { Sharp } from 'sharp';
-import { DEFAULT_RETRY_TIME, DIST_PATH, RETRY_INTERVAL } from './constant';
-import { MapSize, MapStatsResp, ResultSaver, RoomStatus, ServerConnectInfo } from './type';
+import sharp, { Sharp } from 'sharp';
+import { DEFAULT_RETRY_TIME, DIST_PATH, RETRY_INTERVAL, ROOM_MASK_COLORS, ROOM_SIZE } from './constant';
+import { MapSize, MapStatsResp, MaskType, ResultSaver, RoomStatus, ServerConnectInfo } from './type';
 
 /**
  * 将地图视作一个中心对称的四象限布局来获取其房间名
@@ -155,4 +155,19 @@ export const getDefaultSaver = async function (connectInfo: ServerConnectInfo, d
         await result.toFile(savePath);
         return savePath;
     };
+};
+
+/**
+ * 获取图层蒙版
+ * 不需要重复生成，共用一个即可
+ */
+export const getMask = async function (type: MaskType, width = ROOM_SIZE, height = ROOM_SIZE): Promise<Buffer> {
+    // 使用配置的背景色
+    const background = ROOM_MASK_COLORS[type];
+    // 生成一个半透明的纯色蒙版
+    const mask = sharp({
+        create: { width, height, channels: 3, background }
+    }).ensureAlpha(0.5).png();
+
+    return await mask.toBuffer();
 };

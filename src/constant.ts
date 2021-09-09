@@ -1,8 +1,11 @@
-import { resolve } from 'path';
+import path from 'path';
 import { RoomStatus } from './type';
 
 /** 头像边框的颜色 */
 export const AVATAR_OUTLINE_COLOR = '#151515';
+
+/** 默认的底图背景色 */
+export const DEFAULT_BACKGROUND_COLOR = 'black';
 
 /**
  * 房间等级对应的头像缩放等级
@@ -34,10 +37,10 @@ export const ROOM_MASK_COLORS = {
 };
 
 /** 缓存存放路径 */
-export const CACHE_PATH = resolve(__dirname, '../.screeps-world-printer/cache/');
+export const CACHE_PATH = path.resolve('./.screeps-world-printer/cache/');
 
 /** 结果文件存放路径 */
-export const DIST_PATH = resolve(__dirname, '../.screeps-world-printer/dist/');
+export const DIST_PATH = path.resolve('./.screeps-world-printer/dist/');
 
 /** 请求出错时的重试次数 */
 export const DEFAULT_RETRY_TIME = 5;

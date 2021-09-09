@@ -2,8 +2,8 @@ import sharp, { OverlayOptions } from 'sharp';
 // import { writeJSON, readJSON } from 'fs-extra';
 import { MapStatsResp, DrawMaterial, PlayerInfo, PrintEvent, ProcessEvent, WorldDataSet, DrawContext } from './type';
 import { map, mapLimit } from 'async';
-import { PIXEL_LIMIT, ROOM_SIZE } from './constant';
-import { fixRoomStats } from './utils';
+import { DEFAULT_BACKGROUND_COLOR, PIXEL_LIMIT, ROOM_SIZE } from './constant';
+import { fixRoomStats, getMask } from './utils';
 
 /**
  * 获取绘制世界所需的全部素材
@@ -23,7 +23,8 @@ export const fetchWorld = async function (context: DrawContext): Promise<WorldDa
     // 拿着二维房间名数组请求服务器，获取所有房间和所有者的信息
     emitter.emit(ProcessEvent.BeforeFetchWorld, { mapSize });
     // const roomStats = await readJSON('./.cache/tempRoomStats.json');
-    const roomStats = await service.getMapStats(roomNameMatrix.flat(2));
+    const queryRoomName = roomNameMatrix.flat(2).filter(Boolean) as string[];
+    const roomStats = await service.getMapStats(queryRoomName);
     fixRoomStats(roomStats);
     // await writeJSON('./.cache/tempRoomStats.json', roomStats);
     emitter.emit(ProcessEvent.AfterFetchWorld, { });
@@ -90,7 +91,7 @@ const matrixMapLimit = async function <T, R>(
 const materialCreatorFactory = function (
     context: DrawContext,
     roomStats: MapStatsResp
-): (roomName: string) => Promise<DrawMaterial> {
+): (roomName: string | undefined) => Promise<DrawMaterial | undefined> {
     const { cache, service, emitter } = context;
     /**
      * 从缓存 / 服务器获取房间瓦片
@@ -118,7 +119,9 @@ const materialCreatorFactory = function (
      * 素材创建器
      * 解析房间名和对应的信息，获取用于绘制的素材
      */
-    return async function (roomName: string): Promise<DrawMaterial> {
+    return async function (roomName: string | undefined): Promise<DrawMaterial | undefined> {
+        if (!roomName) return undefined;
+
         const roomInfo = roomStats.stats[roomName];
         const ownerName = roomInfo?.own?.user;
         if (!roomInfo) throw new Error(`getMapStats 未获取到 ${roomName} 的信息`);
@@ -126,6 +129,7 @@ const materialCreatorFactory = function (
         const material: DrawMaterial = {
             roomName,
             roomInfo,
+            getMask,
             getRoom: await createRoomGetter(roomName),
             getBadge: ownerName ? await createBadgeGetter(roomStats.users[ownerName]) : undefined
         };
@@ -142,47 +146,51 @@ const materialCreatorFactory = function (
  * @param context 上下文
  */
 const drawAllRoom = async function (dataSet: WorldDataSet, context: DrawContext): Promise<sharp.Sharp> {
-    const { mapSize, roomMaterialMatrix } = dataSet;
+    const { roomMaterialMatrix } = dataSet;
     const { drawRoom, cache, emitter } = context;
 
-    const height = mapSize.height * ROOM_SIZE;
-    const width = mapSize.width * ROOM_SIZE;
+    const height = roomMaterialMatrix.length * ROOM_SIZE;
+    // 用最宽的行作为宽度
+    const width = Math.max(...roomMaterialMatrix.map(row => row.length)) * ROOM_SIZE;
 
     // 在每次绘制完成后发射绘制事件
     // 为了防止内存泄漏，这里不会把绘制结果发射出去
-    const roomDrawer = async (material: DrawMaterial): Promise<Buffer> => {
+    const roomDrawer = async (material: DrawMaterial | undefined): Promise<Buffer | undefined> => {
         const roomResult = await drawRoom(material);
         emitter.emit(PrintEvent.Draw, material);
         return roomResult;
     };
 
     // 地图行绘制器
-    const rowDrawer = async (materialRow: DrawMaterial[]): Promise<string> => {
+    const rowDrawer = async (materialRow: Array<DrawMaterial | undefined>): Promise<string> => {
         // 绘制该行的房间
-        emitter.emit(PrintEvent.Draw);
-        const roomTileRow = await map<DrawMaterial, Buffer>(materialRow, roomDrawer);
+        const roomTileRow = await map<DrawMaterial | undefined, Buffer>(materialRow, roomDrawer);
         // 生成该行背景
         const rowBg = sharp({
-            create: { height: ROOM_SIZE, width, channels: 4, background: '#fff' },
+            create: { height: ROOM_SIZE, width, channels: 4, background: DEFAULT_BACKGROUND_COLOR },
             limitInputPixels: PIXEL_LIMIT
         });
 
         // 粘贴所有房间瓦片到背景上
-        const rowSharp = rowBg.composite(roomTileRow.map((input, index) => ({
-            input,
-            blend: 'atop',
-            top: 0,
-            left: index * ROOM_SIZE
-        })));
+        const overlays = roomTileRow.map((input, index) => {
+            if (!input) return undefined;
+            return {
+                input,
+                blend: 'atop',
+                top: 0,
+                left: index * ROOM_SIZE
+            };
+        }).filter(Boolean) as OverlayOptions[];
+        const rowSharp = rowBg.composite(overlays);
 
         // 把这一行地图缓存到本地
-        const rowroomNames = materialRow.map(({ roomName }) => roomName);
+        const rowroomNames = materialRow.map(material => material?.roomName);
         const rowSavePath = await cache.setMapRow(rowroomNames, rowSharp);
         return rowSavePath;
     };
 
     // 绘制所有行
-    const rowBuffers = await mapLimit<DrawMaterial[], string>(roomMaterialMatrix, 1, rowDrawer);
+    const rowBuffers = await mapLimit<Array<DrawMaterial | undefined>, string>(roomMaterialMatrix, 1, rowDrawer);
 
     // 将所有行拼接在一起
     const overlays: OverlayOptions[] = rowBuffers.map((input, index) => ({
@@ -193,7 +201,7 @@ const drawAllRoom = async function (dataSet: WorldDataSet, context: DrawContext)
     }));
 
     const result = sharp({
-        create: { height, width, channels: 4, background: '#fff' },
+        create: { height, width, channels: 4, background: DEFAULT_BACKGROUND_COLOR },
         limitInputPixels: PIXEL_LIMIT
     }).composite(overlays).png();
 
