@@ -6,7 +6,7 @@ import { drawWorld, fetchWorld } from './core';
 import { defaultRoomDrawer } from './drawRoom';
 import { ScreepsService } from './service';
 import {
-    DrawContext, DrawMaterial, PrintEvent, ProcessCallbacks, ProcessEvent, ResultSaver,
+    DrawContext, PrintEvent, PrintEventListeners, ResultSaver,
     RoomDrawer, RoomNameGetter, ServerConnectInfo, WorldDataSet
 } from './type';
 import { getDefaultSaver } from './utils';
@@ -49,10 +49,7 @@ export class ScreepsWorldPrinter extends EventEmitter {
      * 默认添加的日志回调数组
      * 保存在这里用于取消监听时调用
      */
-    private logListener: Array<{
-        event: PrintEvent | ProcessEvent
-        listener: (...args: any[]) => unknown
-    }> = [];
+    private logListener: PrintEventListeners = {};
 
     /**
      * 下载进度条
@@ -94,7 +91,7 @@ export class ScreepsWorldPrinter extends EventEmitter {
      * 默认开启
      */
     talkative (): ScreepsWorldPrinter {
-        if (this.logListener.length > 0) return this;
+        if (Object.keys(this.logListener).length > 0) return this;
 
         const downlaodFormat = '下载进度 {bar} {percentage}% {value}/{total}';
         const downlaodBar = new SingleBar({ format: downlaodFormat, fps: 1 }, Presets.legacy);
@@ -102,47 +99,37 @@ export class ScreepsWorldPrinter extends EventEmitter {
         const drawFormat = '拼接进度 {bar} {percentage}% {value}/{total}';
         const drawBar = new SingleBar({ format: drawFormat, fps: 1 }, Presets.legacy);
 
-        const processCallbacks: ProcessCallbacks = {
-            [ProcessEvent.BeforeFetchSize]: ({ host, shard }) => {
+        const logListener: PrintEventListeners = {
+            [PrintEvent.BeforeFetchSize]: ({ host, shard }) => {
                 console.log(`开始绘制 ${host} ${shard ?? ''} 的世界地图`);
                 console.log('正在加载地图尺寸');
             },
-            [ProcessEvent.BeforeFetchWorld]: () => {
+            [PrintEvent.BeforeFetchWorld]: () => {
                 console.log('正在获取世界信息');
             },
-            [ProcessEvent.BeforeDownload]: ({ roomStats }) => {
+            [PrintEvent.BeforeDownload]: ({ roomStats }) => {
                 console.log('正在下载素材');
                 downlaodBar.start(Object.keys(roomStats.stats).length, 0);
             },
-            [ProcessEvent.AfterDownload]: () => downlaodBar.stop(),
-            [ProcessEvent.BeforeDraw]: ({ dataSet }) => {
+            [PrintEvent.Download]: () => downlaodBar.increment(),
+            [PrintEvent.AfterDownload]: () => downlaodBar.stop(),
+            [PrintEvent.BeforeDraw]: ({ dataSet }) => {
                 console.log('正在绘制地图');
                 const total = dataSet.roomMaterialMatrix.reduce((total, row) => total + row.length, 0);
                 drawBar.start(total, 0);
             },
-            [ProcessEvent.AfterDraw]: () => drawBar.stop(),
-            [ProcessEvent.BeforeSave]: () => {
+            [PrintEvent.Draw]: () => drawBar.increment(),
+            [PrintEvent.AfterDraw]: () => drawBar.stop(),
+            [PrintEvent.BeforeSave]: () => {
                 console.log('正在保存结果');
             },
-            [ProcessEvent.AfterSave]: ({ savePath }) => {
+            [PrintEvent.AfterSave]: ({ savePath }) => {
                 console.log(`绘制完成，结果已保存至 ${savePath}`);
             }
         };
-        this.onProcess(processCallbacks);
+        this.addPrintListener(logListener);
 
-        const downloadListener = (): void => downlaodBar.increment();
-        this.onDownload(downloadListener);
-
-        const drawListener = (): void => drawBar.increment();
-        this.onDraw(drawListener);
-
-        this.logListener.push(
-            ...Object.entries(processCallbacks).map(
-                ([event, listener]) => ({ event: event as ProcessEvent, listener })
-            ),
-            { event: PrintEvent.Download, listener: downloadListener },
-            { event: PrintEvent.Draw, listener: drawListener }
-        );
+        this.logListener = logListener;
         this.downloadBar = downlaodBar;
         this.drawBar = drawBar;
 
@@ -153,8 +140,10 @@ export class ScreepsWorldPrinter extends EventEmitter {
      * 关闭日志输出
      */
     silence (): ScreepsWorldPrinter {
-        this.logListener.forEach(({ event, listener }) => this.off(event, listener));
-        this.logListener = [];
+        Object.entries(this.logListener).forEach(
+            ([event, listener]) => this.off(event, listener)
+        );
+        this.logListener = {};
 
         this.stopLogBar();
         this.downloadBar = this.drawBar = undefined;
@@ -197,28 +186,10 @@ export class ScreepsWorldPrinter extends EventEmitter {
     /**
      * 监听事件：进度推进
      */
-    onProcess (callbacks: ProcessCallbacks): ScreepsWorldPrinter {
+    addPrintListener (callbacks: PrintEventListeners): ScreepsWorldPrinter {
         Object.entries(callbacks).forEach(
             ([event, callback]) => this.on(event, callback)
         );
-        return this;
-    }
-
-    /**
-     * 监听事件：房间素材下载
-     * 将在每次房间素材下载完成后调用
-     */
-    onDownload (callback: (material: DrawMaterial) => unknown): ScreepsWorldPrinter {
-        this.on(PrintEvent.Download, callback);
-        return this;
-    }
-
-    /**
-     * 监听事件：房间绘制
-     * 将在每次房间绘制完成后调用
-     */
-    onDraw (callback: (material: DrawMaterial) => unknown): ScreepsWorldPrinter {
-        this.on(PrintEvent.Draw, callback);
         return this;
     }
 

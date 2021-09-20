@@ -1,6 +1,6 @@
 import sharp, { OverlayOptions } from 'sharp';
 // import { writeJSON, readJSON } from 'fs-extra';
-import { MapStatsResp, DrawMaterial, PlayerInfo, PrintEvent, ProcessEvent, WorldDataSet, DrawContext } from './type';
+import { MapStatsResp, DrawMaterial, PlayerInfo, PrintEvent, WorldDataSet, DrawContext } from './type';
 import { map, mapLimit } from 'async';
 import { DEFAULT_BACKGROUND_COLOR, PIXEL_LIMIT, ROOM_SIZE } from './constant';
 import { fixRoomStats, getMask } from './utils';
@@ -15,27 +15,27 @@ export const fetchWorld = async function (context: DrawContext): Promise<WorldDa
     await service.connect();
 
     // 获取世界的尺寸，并将尺寸传递给外部回调来获取二维的房间名数组
-    emitter.emit(ProcessEvent.BeforeFetchSize, { host, shard });
+    emitter.emit(PrintEvent.BeforeFetchSize, { host, shard });
     const mapSize = await service.getMapSize();
     const roomNameMatrix = await getRoomNames(mapSize);
-    emitter.emit(ProcessEvent.AfterFetchSize, { });
+    emitter.emit(PrintEvent.AfterFetchSize, { });
 
     // 拿着二维房间名数组请求服务器，获取所有房间和所有者的信息
-    emitter.emit(ProcessEvent.BeforeFetchWorld, { mapSize });
+    emitter.emit(PrintEvent.BeforeFetchWorld, { mapSize });
     // const roomStats = await readJSON('./.cache/tempRoomStats.json');
     const queryRoomName = roomNameMatrix.flat(2).filter(Boolean) as string[];
     const roomStats = await service.getMapStats(queryRoomName);
     fixRoomStats(roomStats);
     // await writeJSON('./.cache/tempRoomStats.json', roomStats);
-    emitter.emit(ProcessEvent.AfterFetchWorld, { });
+    emitter.emit(PrintEvent.AfterFetchWorld, { });
 
     // 通过房间名数组配合上一步获取的全地图数据，开始获取素材（地图瓦片和玩家头像）
     // 这一步的耗时是最长的（在没有缓存的情况下）
     // 在这一步会返回素材的访问器而不是直接将其载入到内存
-    emitter.emit(ProcessEvent.BeforeDownload, { roomStats });
+    emitter.emit(PrintEvent.BeforeDownload, { roomStats });
     const createMaterial = materialCreatorFactory(context, roomStats);
     const roomMaterialMatrix = await matrixMapLimit(roomNameMatrix, 15, createMaterial);
-    emitter.emit(ProcessEvent.AfterDownload, { });
+    emitter.emit(PrintEvent.AfterDownload, { });
 
     return { roomMaterialMatrix, mapSize, roomStats };
 };
@@ -47,14 +47,14 @@ export const drawWorld = async function (dataSet: WorldDataSet, context: DrawCon
     const { emitter, saveResult } = context;
 
     // 将所有素材按行分别读取到内存并绘制，再将绘制完成的地图行拼接成一整张图片
-    emitter.emit(ProcessEvent.BeforeDraw, { dataSet });
+    emitter.emit(PrintEvent.BeforeDraw, { dataSet });
     const result = await drawAllRoom(dataSet, context);
-    emitter.emit(ProcessEvent.AfterDraw, { });
+    emitter.emit(PrintEvent.AfterDraw, { });
 
     // 获取存放路径并保存结果
-    emitter.emit(ProcessEvent.BeforeSave, { result });
+    emitter.emit(PrintEvent.BeforeSave, { result });
     const savePath = await saveResult(result);
-    emitter.emit(ProcessEvent.AfterSave, { savePath });
+    emitter.emit(PrintEvent.AfterSave, { savePath });
 
     return savePath;
 };

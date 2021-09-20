@@ -305,60 +305,112 @@ export interface PrivateConnectInfo {
     password: string
 }
 
+/**
+ * 服务器连接信息
+ * 包括官服 token、官服账号密码、私服账号密码
+ */
 export type ServerConnectInfo = OfficalTokenConnectInfo | OfficalPasswordConnectInfo | PrivateConnectInfo;
 
+/**
+ * 所有绘制事件
+ */
 export enum PrintEvent {
-    Download = 'download',
-    Draw = 'draw'
-}
-
-export enum ProcessEvent {
+    /**
+     * 获取服务器地图尺寸之前
+     */
     BeforeFetchSize = 'beforeFetchSize',
+    /**
+     * 获取服务器地图尺寸之后
+     */
     AfterFetchSize = 'afterFetchSize',
+    /**
+     * 获取服务器房间信息之前
+     */
     BeforeFetchWorld = 'beforeFetchWorld',
+    /**
+     * 获取服务器房间信息之后
+     */
     AfterFetchWorld = 'afterFetchWorld',
+    /**
+     * 下载绘制素材之前
+     */
     BeforeDownload = 'beforeDownload',
+    /**
+     * 单个房间素材下载完成
+     */
+    Download = 'download',
+    /**
+     * 所有绘制素材下载完成之后
+     */
     AfterDownload = 'afterDownload',
+    /**
+     * 开始绘制之前
+     */
     BeforeDraw = 'beforeDraw',
+    /**
+     * 单个房间绘制完成
+     */
+    Draw = 'draw',
+    /**
+     * 地图绘制完成之后
+     */
     AfterDraw = 'afterDraw',
+    /**
+     * 保存之前
+     */
     BeforeSave = 'beforeSave',
+    /**
+     * 保存之后
+     */
     AfterSave = 'afterSave'
 }
 
+/**
+ * 绘制事件对应的回调参数
+ */
 export interface ProcessParam {
-    [ProcessEvent.BeforeFetchSize]: {
+    [PrintEvent.BeforeFetchSize]: {
         host: string
         shard?: string
     }
-    [ProcessEvent.AfterFetchSize]: {
+    [PrintEvent.AfterFetchSize]: {
 
     }
-    [ProcessEvent.BeforeFetchWorld]: {
+    [PrintEvent.BeforeFetchWorld]: {
         mapSize: MapSize
     }
-    [ProcessEvent.AfterFetchWorld]: {
+    [PrintEvent.AfterFetchWorld]: {
 
     }
-    [ProcessEvent.BeforeDownload]: {
+    [PrintEvent.BeforeDownload]: {
         roomStats: MapStatsResp
     }
-    [ProcessEvent.AfterDownload]: {
+    [PrintEvent.Download]: {
+        material: DrawMaterial
+    }
+    [PrintEvent.AfterDownload]: {
 
     }
-    [ProcessEvent.BeforeDraw]: {
+    [PrintEvent.BeforeDraw]: {
         dataSet: WorldDataSet
     }
-    [ProcessEvent.AfterDraw]: {
+    [PrintEvent.Draw]: {
+        material: DrawMaterial
+    }
+    [PrintEvent.AfterDraw]: {
 
     }
-    [ProcessEvent.BeforeSave]: {
+    [PrintEvent.BeforeSave]: {
         result: Sharp
     }
-    [ProcessEvent.AfterSave]: {
+    [PrintEvent.AfterSave]: {
         savePath: string
     }
 }
 
-export type ProcessCallbacks = {
-    [eventType in ProcessEvent]?: (event: ProcessParam[eventType]) => unknown;
+/**
+ * 绘制事件回调对象
+ */
+export type PrintEventListeners = {
+    [eventType in PrintEvent]?: (event: ProcessParam[eventType]) => unknown;
 };

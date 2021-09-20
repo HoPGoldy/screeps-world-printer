@@ -10,7 +10,7 @@ screeps-world-printer 是一个简单且支持自定义的 screeps 游戏地图�
 - 支持局部更新的本地缓存，提高绘制速度
 - 支持绘制官服及私服
 
-> 本项目将使用 [示例脚本](https://github.com/HoPGoldy/screeps-world-printer/tree/main/example) 以每日两次的频率绘制官服地图，你可以在 [这里](https://github.com/HoPGoldy/screeps-world-printer/releases) 找到最终的成果。
+> 本项目将以每日两次的频率绘制官服地图（运行于 [Github Action](https://github.com/HoPGoldy/screeps-world-printer/actions)，使用 [示例脚本](https://github.com/HoPGoldy/screeps-world-printer/tree/main/example)），你可以在 [screeps-world-printer - releases](https://github.com/HoPGoldy/screeps-world-printer/releases) 找到最终的绘制成果。
 
 ## 如何使用
 
@@ -70,7 +70,7 @@ printer.drawWorld();
 
 由于 screeps 服务器可以自行增减房间，并且没有提供 api 来获取当前可用的所有房间名，所以我们需要一个“垫片”来对不同的服务器进行适配，在本项目中称其为“房间名解析器”。
 
-**房间名解析器是一个异步函数，接受世界地图的尺寸（来自服务器 api）并返回二维房间名数组**，我们可以通过实例化时传入第二个参数来指定房间名解析器：
+**房间名解析器是一个异步函数，接受世界地图的尺寸（来自服务器 api）并返回二维房间名数组**，我们可以通过实例化时传入第二个参数来指定房间名解析器，或者在实例化之后通过 `setRoomNameGetter` 方法设置新的解析器：
 
 ```js
 const roomNameGetter = async ({ width, height }) => {
@@ -83,6 +83,8 @@ const roomNameGetter = async ({ width, height }) => {
 }
 
 const printer = new ScreepsWorldPrinter(connectInfo, roomNameGetter);
+// 或者
+printer.setRoomNameGetter(roomNameGetter);
 
 printer.drawWorld();
 ```
@@ -112,7 +114,7 @@ const roomNameGetter = async () => [
 - `getCentrosymmetricRoomNames`: 生成四象限地图房间名，当连接到官服时默认使用
 - `getDefaultServerRoomNames`：生成默认私服房间名（以右下角为原点 W0N0 的 WN 象限），当连接到私服时默认使用
 
-在一般情况下默认提供的解析器都可以正常工作，但是也有例外，像 `screepspls` 这种大型私服，使用默认的私服解析器就会出现问题，这时可以手动指定解析器或者使用自己的解析器：
+在一般情况下默认提供的解析器都可以正常工作，但是也有例外，像 `ScreepsPlus` 这种大型私服，使用默认的私服解析器就会出现问题，这时可以手动指定解析器或者使用自己的解析器：
 
 ```js
 const { ScreepsWorldPrinter, getCentrosymmetricRoomNames } = require('screeps-world-printer');
@@ -130,7 +132,7 @@ printer.drawWorld();
 ```js
 const { ScreepsWorldPrinter, defaultRoomDrawer } = require('screeps-world-printer');
 
-const connectInfo = { /** ... */};
+const connectInfo = { /** ... */ };
 
 const printer = new ScreepsWorldPrinter(connectInfo);
 
@@ -140,7 +142,7 @@ printer.setRoomDrawer(defaultRoomDrawer);
 printer.drawWorld();
 ```
 
-**roomDrawer 绘制器是一个异步函数，接受绘制素材并返回一个 Buffer。**在执行绘制时将会对每一个房间执行一遍该方法，并将返回的 buffer 当作图像添加到最终的成果图上。那么现在的问题就是，什么是绘制素材呢？
+**roomDrawer 绘制器是一个异步函数，接受绘制素材并返回一个 Buffer。** 在执行绘制时将会对每一个房间执行一遍该方法，并将返回的 buffer 当作图像添加到最终的成果图上。那么现在的问题就是，什么是绘制素材呢？
 
 简单来说，绘制素材是一个对象，其类型声明如下：
 
@@ -172,7 +174,7 @@ interface DrawMaterial {
 }
 ```
 
-其中 `roomInfo` 包含了从服务器获取到关于本房间的相关信息，而 `getRoom`、`getBadge`、`getMask` 则分别用于获取房间地形瓦片、玩家头像（如果没有玩家占领则为 undefined）以及支持的蒙版（例如房间未开放或者新手区蒙版）。
+其中 `roomInfo` 包含了从服务器获取到关于本房间的相关信息（点击上方 `RoomInfo` 来查看详细类型），而 `getRoom`、`getBadge`、`getMask` 则分别用于获取房间地形瓦片、玩家头像（如果没有玩家占领则为 undefined）以及支持的蒙版（例如房间未开放或者新手区蒙版）。
 
 你可以按照你的想法进行绘制，这里推荐使用 [sharp](https://sharp.pixelplumbing.com/) 进行操作（本项目的内部也使用了 `sharp`），例如下面是一个给所有房间添加小爱心的示例：
 
@@ -257,17 +259,16 @@ printer.setResultSaver(getDefaultSaver(connectInfo));
 
 监听绘制流程事件，设置方法如下：
 
-```
+```js
 
 ```
 
-### `onDownload`
+---
 
-监听素材下载事件，将在每个房间素材下载完成后调用
+通过以上方法注册的事件回调均可通过 `.off` 方法注销：
 
-### `onDraw`
-
-监听房间绘制事件，将在每个房间绘制完成后调用
+```js
+```
 
 ## 保持静默
 
@@ -285,7 +286,7 @@ printer.talkative();
 
 ## 仅获取素材而不进行绘制
 
-默认调用 `drawWorld` 方法后，将会下载/更新所有的素材，然后调用房间绘制器和保存器完成后续的绘制和存放。如果你有别的想法，只需要用到素材而不需要进行绘制的话，那么可以调用 `fetchWorld` 来替代 `drawWorld` 方法。
+默认调用 `drawWorld` 方法后，将会下载素材，然后调用房间绘制器和保存器完成后续操作。如果你有别的想法，只需要用到素材而不需要进行绘制的话，那么可以调用 `fetchWorld` 来替代 `drawWorld` 方法。
 
 `fetchWorld` 方法将会返回一个绘制素材对象二维数组，结构和房间名解析器返回的二维数组格式相同。你可以使用这些素材完成更灵活的操作，例如开发一个 web 服务器，做一个在线的可交互地图之类的。
 
