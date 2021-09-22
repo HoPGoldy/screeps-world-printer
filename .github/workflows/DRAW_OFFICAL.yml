@@ -19,7 +19,7 @@ jobs:
           shard-name: shard0
           artifact-name: shard0
           screeps-token: ${{ secrets.SCREEPS_TOKEN }}
-  
+
   draw-shard1:
     runs-on: ubuntu-latest
 
@@ -30,7 +30,7 @@ jobs:
           shard-name: shard1
           artifact-name: shard1
           screeps-token: ${{ secrets.SCREEPS_TOKEN }}
-  
+
   draw-shard2:
     runs-on: ubuntu-latest
 
@@ -41,7 +41,7 @@ jobs:
           shard-name: shard2
           artifact-name: shard2
           screeps-token: ${{ secrets.SCREEPS_TOKEN }}
-  
+
   draw-shard3:
     runs-on: ubuntu-latest
 
