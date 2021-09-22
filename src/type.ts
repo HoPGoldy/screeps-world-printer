@@ -200,6 +200,31 @@ export interface DrawWorldOptions {
 }
 
 /**
+ * 头像边框配置项
+ * 默认配置见 @see https://github.com/HoPGoldy/screeps-world-printer/blob/main/src/constant.ts#L58
+ */
+export interface GetBadgeBorderFuncOptions {
+    /**
+     * 边框的粗细
+     */
+    strokeWidth: number
+    /**
+     * 边框的填充色
+     */
+    fill: string
+}
+
+/**
+ * 获取头像边框
+ */
+export type GetBadgeBorderFunc = (opt?: Partial<GetBadgeBorderFuncOptions>) => Promise<Buffer>;
+
+/**
+ * 获取房间瓦片蒙版
+ */
+export type GetMaskFunc = (type: MaskType, size?: number) => Promise<Buffer>;
+
+/**
  * 房间绘制素材
  */
 export interface DrawMaterial {
@@ -220,12 +245,15 @@ export interface DrawMaterial {
      */
     getBadge?: () => Promise<Buffer>
     /**
-     * 获取图层蒙版
-     * @param type 蒙版类型
-     * @param width 蒙版的长度
-     * @param height 蒙版的宽度
+     * 获取头像边框
      */
-    getMask: (type: MaskType, width?: number, height?: number) => Promise<Buffer>
+    getBadgeBorder?: GetBadgeBorderFunc
+    /**
+     * 获取正方形图层蒙版
+     * @param type 蒙版类型
+     * @param size 蒙版的长宽
+     */
+    getMask: GetMaskFunc
 }
 
 /**

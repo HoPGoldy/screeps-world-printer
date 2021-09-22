@@ -3,7 +3,7 @@ import sharp, { OverlayOptions } from 'sharp';
 import { MapStatsResp, DrawMaterial, PlayerInfo, PrintEvent, WorldDataSet, DrawContext } from './type';
 import { map, mapLimit } from 'async';
 import { DEFAULT_BACKGROUND_COLOR, PIXEL_LIMIT, ROOM_SIZE } from './constant';
-import { fixRoomStats, getMask } from './utils';
+import { fixRoomStats, getBadgeBorder, getMask } from './utils';
 
 /**
  * 获取绘制世界所需的全部素材
@@ -22,11 +22,11 @@ export const fetchWorld = async function (context: DrawContext): Promise<WorldDa
 
     // 拿着二维房间名数组请求服务器，获取所有房间和所有者的信息
     emitter.emit(PrintEvent.BeforeFetchWorld, { mapSize });
-    // const roomStats = await readJSON('./.cache/tempRoomStats.json');
+    // const roomStats = await readJSON('./.screeps-world-printer/cache/tempRoomStats.json');
     const queryRoomName = roomNameMatrix.flat(2).filter(Boolean) as string[];
     const roomStats = await service.getMapStats(queryRoomName);
     fixRoomStats(roomStats);
-    // await writeJSON('./.cache/tempRoomStats.json', roomStats);
+    // await writeJSON('./.screeps-world-printer/cache/tempRoomStats.json', roomStats);
     emitter.emit(PrintEvent.AfterFetchWorld, { });
 
     // 通过房间名数组配合上一步获取的全地图数据，开始获取素材（地图瓦片和玩家头像）
@@ -131,7 +131,8 @@ const materialCreatorFactory = function (
             roomInfo,
             getMask,
             getRoom: await createRoomGetter(roomName),
-            getBadge: ownerName ? await createBadgeGetter(roomStats.users[ownerName]) : undefined
+            getBadge: ownerName ? await createBadgeGetter(roomStats.users[ownerName]) : undefined,
+            getBadgeBorder: ownerName ? getBadgeBorder : undefined
         };
 
         emitter.emit(PrintEvent.Download, roomName, material, roomStats);

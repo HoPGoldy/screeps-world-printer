@@ -1,4 +1,4 @@
-import { ScreepsWorldPrinter, getCentrosymmetricRoomNames } from "../src";
+import { ScreepsWorldPrinter } from "../src";
 import { getArgs } from "./utils";
 
 const { token, shard } = getArgs();
@@ -10,6 +10,6 @@ const printer = new ScreepsWorldPrinter({
     host: 'https://screeps.com/',
     token,
     shard: shard ?? 'shard3',
-}, getCentrosymmetricRoomNames);
+});
 
 printer.drawWorld();

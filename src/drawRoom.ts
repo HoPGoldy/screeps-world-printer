@@ -49,11 +49,14 @@ const maskProcessor: DrawProcessor = async function (roomTile, material) {
  * 渲染房间对应的头像，以及对头像进行缩放和透明度处理
  */
 const badgeProcessor: DrawProcessor = async function (roomTile, material) {
-    if (!material.getBadge) return undefined;
+    if (!material.getBadge || !material.getBadgeBorder) return undefined;
 
+    // 将头像和边框贴起来
     const rawBadge = await material.getBadge();
-    const badgeSharp = sharp(rawBadge);
-    const { width: rawBadgeWidth } = await badgeSharp.metadata();
+    const badgeBorder = await material.getBadgeBorder();
+    const badgeWithBorder = sharp(rawBadge).composite([{ input: badgeBorder, blend: 'atop' }]);
+
+    const { width: rawBadgeWidth } = await badgeWithBorder.metadata();
     const ownLevel = material.roomInfo.own?.level;
 
     // level 有可能为 0，所以需要特判一下
@@ -63,9 +66,11 @@ const badgeProcessor: DrawProcessor = async function (roomTile, material) {
 
     // 根据房间等级缩放头像大小
     const resizeWidth = Math.ceil(rawBadgeWidth * BADGE_RESIZE_WITH_LEVEL[ownLevel]);
-    let badge = badgeSharp.resize(resizeWidth);
+    // sharp composite 和 resize 不能在同一条 pipline 里，所以这里要 toBuffer 转换一下
+    const rawBadgeWithBorder = await badgeWithBorder.toBuffer();
+    let badge = sharp(rawBadgeWithBorder).resize(resizeWidth);
     // 外矿的话就添加半透明
-    if (ownLevel === 0) badge = addOpacity(badgeSharp, 128);
+    if (ownLevel === 0) badge = addOpacity(badge, 128);
 
     return { input: await badge.toBuffer(), blend: 'atop' };
 };

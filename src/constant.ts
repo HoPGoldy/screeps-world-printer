@@ -1,8 +1,5 @@
 import path from 'path';
-import { RoomStatus } from './type';
-
-/** 头像边框的颜色 */
-export const AVATAR_OUTLINE_COLOR = '#151515';
+import { RoomStatus, GetBadgeBorderFuncOptions } from './type';
 
 /** 默认的底图背景色 */
 export const DEFAULT_BACKGROUND_COLOR = 'black';
@@ -56,3 +53,9 @@ export const ROOM_SIZE = 150;
 
 /** sharp 像素处理上限 */
 export const PIXEL_LIMIT = 800000000;
+
+/** 默认的头像边框配置项 */
+export const GET_BADGE_BORDER_DEFAULT_OPTIONS: GetBadgeBorderFuncOptions = {
+    strokeWidth: 8,
+    fill: '#151515'
+};

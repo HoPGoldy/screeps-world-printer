@@ -2,8 +2,8 @@ import { createHash } from 'crypto';
 import { ensureDir } from 'fs-extra';
 import path from 'path';
 import sharp, { Sharp } from 'sharp';
-import { DEFAULT_RETRY_TIME, DIST_PATH, RETRY_INTERVAL, ROOM_MASK_COLORS, ROOM_SIZE } from './constant';
-import { MapSize, MapStatsResp, MaskType, ResultSaver, RoomStatus, ServerConnectInfo } from './type';
+import { DEFAULT_RETRY_TIME, DIST_PATH, GET_BADGE_BORDER_DEFAULT_OPTIONS, RETRY_INTERVAL, ROOM_MASK_COLORS, ROOM_SIZE } from './constant';
+import { GetMaskFunc, MapSize, MapStatsResp, ResultSaver, RoomStatus, ServerConnectInfo, GetBadgeBorderFunc } from './type';
 
 /**
  * 将地图视作一个中心对称的四象限布局来获取其房间名
@@ -161,13 +161,27 @@ export const getDefaultSaver = async function (connectInfo: ServerConnectInfo, d
  * 获取图层蒙版
  * 不需要重复生成，共用一个即可
  */
-export const getMask = async function (type: MaskType, width = ROOM_SIZE, height = ROOM_SIZE): Promise<Buffer> {
+export const getMask: GetMaskFunc = async function (type, size = ROOM_SIZE) {
     // 使用配置的背景色
     const background = ROOM_MASK_COLORS[type];
     // 生成一个半透明的纯色蒙版
     const mask = sharp({
-        create: { width, height, channels: 3, background }
+        create: { width: size, height: size, channels: 3, background }
     }).ensureAlpha(0.5).png();
 
     return await mask.toBuffer();
+};
+
+/**
+ * 绘制头像边框
+ * @param opt 边框绘制配置项
+ */
+export const getBadgeBorder: GetBadgeBorderFunc = async function (opt = {}) {
+    const { strokeWidth, fill } = { ...GET_BADGE_BORDER_DEFAULT_OPTIONS, ...opt };
+
+    const border = `<svg width="128" height="128" version="1.1" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="64" cy="64" r="64" stroke="${fill}" stroke-width="${strokeWidth}" fill="rgba(0,0,0,0)" />
+    </svg>`;
+
+    return Buffer.from(border);
 };

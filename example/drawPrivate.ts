@@ -1,4 +1,4 @@
-import { ScreepsWorldPrinter, getDefaultServerRoomNames } from "../src";
+import { ScreepsWorldPrinter } from "../src";
 import { getArgs } from "./utils";
 
 const { host, username, password } = getArgs();
@@ -12,6 +12,6 @@ const printer = new ScreepsWorldPrinter({
     host: host || 'http:127.0.0.1:21025',
     username,
     password,
-}, getDefaultServerRoomNames);
+});
 
 printer.drawWorld();

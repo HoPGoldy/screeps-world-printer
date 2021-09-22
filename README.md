@@ -144,9 +144,12 @@ printer.drawWorld();
 
 **roomDrawer 绘制器是一个异步函数，接受绘制素材并返回一个 Buffer。** 在执行绘制时将会对每一个房间执行一遍该方法，并将返回的 buffer 当作图像添加到最终的成果图上。那么现在的问题就是，什么是绘制素材呢？
 
-简单来说，绘制素材是一个对象，其类型声明如下：
+简单来说，绘制素材是一个对象，其类型声明如下（点击其中的类型名来查看详细介绍）：
 
 ```ts
+/**
+ * 房间绘制素材
+ */
 interface DrawMaterial {
     /**
      * 房间名称
@@ -165,16 +168,17 @@ interface DrawMaterial {
      */
     getBadge?: () => Promise<Buffer>
     /**
-     * 获取图层蒙版
-     * @param type 蒙版类型
-     * @param width 蒙版的长度
-     * @param height 蒙版的宽度
+     * 获取头像边框
      */
-    getMask: (type: MaskType, width?: number, height?: number) => Promise<Buffer>
+    getBadgeBorder?: GetBadgeBorderFunc
+    /**
+     * 获取正方形图层蒙版
+     */
+    getMask: GetMaskFunc
 }
 ```
 
-其中 `roomInfo` 包含了从服务器获取到关于本房间的相关信息（点击上方 `RoomInfo` 来查看详细类型），而 `getRoom`、`getBadge`、`getMask` 则分别用于获取房间地形瓦片、玩家头像（如果没有玩家占领则为 undefined）以及支持的蒙版（例如房间未开放或者新手区蒙版）。
+其中 `roomInfo` 包含了从服务器获取到关于本房间的相关信息，而 `getRoom`、`getBadge`、`getMask` 则分别用于获取房间地形瓦片、玩家头像（如果没有玩家占领则为 undefined）、头像边框以及支持的蒙版（例如房间未开放或者新手区蒙版）。
 
 你可以按照你的想法进行绘制，这里推荐使用 [sharp](https://sharp.pixelplumbing.com/) 进行操作（本项目的内部也使用了 `sharp`），例如下面是一个给所有房间添加小爱心的示例：
 
