@@ -1,16 +1,32 @@
 # screeps-world-printer
 
 [![DRAW_OFFICAL](https://github.com/HoPGoldy/screeps-world-printer/actions/workflows/DRAW_OFFICAL.yml/badge.svg?event=schedule)](https://github.com/HoPGoldy/screeps-world-printer/releases)
+[![npm](https://img.shields.io/npm/v/screeps-world-printer)](https://www.npmjs.com/package/screeps-world-printer)
 
 screeps-world-printer 是一个简单且支持自定义的 screeps 游戏地图绘制工具。
 
 特性：
 
-- 基于 ts 开发，完整的类型支持
-- 支持局部更新的本地缓存，提高绘制速度
-- 支持绘制官服及私服
+- 🎁 基于 ts 开发，完整的类型支持
+- ⚡ 支持局部更新的本地缓存，提高绘制速度
+- 🛒 支持绘制官服及私服
+- 🔨 极其灵活的自定义配置
 
 > 本项目将以每日两次的频率绘制官服地图（运行于 [Github Action](https://github.com/HoPGoldy/screeps-world-printer/actions)，使用 [示例脚本](https://github.com/HoPGoldy/screeps-world-printer/tree/main/example)），你可以在 [screeps-world-printer - releases](https://github.com/HoPGoldy/screeps-world-printer/releases) 找到最终的绘制成果。
+
+## 安装
+
+使用 npm：
+
+```
+npm i sharp screeps-world-printer
+```
+
+使用 yarn：
+
+```
+yarn add sharp screeps-world-printer
+```
 
 ## 如何使用
 
@@ -105,8 +121,6 @@ const roomNameGetter = async () => [
 
 [![hqqyOP.png](https://z3.ax1x.com/2021/09/09/hqqyOP.png)](https://imgtu.com/i/hqqyOP)
 
-所以，请不要限制你的想象力。
-
 ---
 
 当不提供房间名解析器时，将根据提供的服务器连接信息来自动选择默认的解析器，本工具包中内置了两个解析器，分别为：
@@ -192,7 +206,7 @@ const heart = Buffer.from('<?xml version="1.0" standalone="no"?><!DOCTYPE svg PU
 
 const roomNameGetter = async () => [
     ['W0N0', 'E0N0'],
-    ['W0S0', 'E0S0'],
+    ['W49S9', 'E0S0'],
 ];
 
 const printer = new ScreepsWorldPrinter(connectInfo, roomNameGetter);
@@ -219,13 +233,13 @@ printer.drawWorld();
 
 将会绘制出如下地图：
 
-[![hL8NBd.png](https://z3.ax1x.com/2021/09/09/hL8NBd.png)](https://imgtu.com/i/hL8NBd)
+[![4dCG1e.png](https://z3.ax1x.com/2021/09/23/4dCG1e.png)](https://imgtu.com/i/4dCG1e)
 
 ## 自定义保存
 
-和自定义绘制类似，你可以通过 `Screeps-world-printer` 实例上的 `setResultSaver` 方法设置最终的结果图像保存行为，以下是默认设置：
+和自定义绘制类似，你可以通过 `Screeps-world-printer` 实例上的 `setResultSaver` 方法设置最终的结果图像保存行为。
 
-`setResultSaver` 接受一个异步函数，这个函数接受最后的地图图像 Buffer 作为参数，你可以在这里将其保存到其他地方，或者传递出去进行其他处理。
+`setResultSaver` 接受一个 **异步函数，这个函数接受最后的地图图像 Buffer 作为参数**，你可以在这里将其保存到其他地方，或者传递出去进行其他处理。
 
 ```js
 const { ScreepsWorldPrinter } = require('screeps-world-printer');
@@ -243,17 +257,18 @@ printer.setResultSaver(resultBuffer => {
 
 ```js
 printer.setResultSaver(resultBuffer => {
-    // 干一些自己想干的事
+    // 干一些自己想干的事...
+
+    // 获取默认的保存器，将会将结果保存至 .screeps-world-printer/dist/
     const saver = getDefaultSaver(connectInfo);
     return await saver();
 });
 
-// 或者
-
+// 下面这种写法等同于没写
 printer.setResultSaver(getDefaultSaver(connectInfo));
 ```
 
-注意需要向 `getDefaultSaver` 传入服务器连接信息，它会生成对应的保存函数（其实就是保存的文件名不同）。
+注意需要向 `getDefaultSaver` 传入服务器连接信息，它会生成对应的保存函数。
 
 ## 设置回调
 
@@ -319,4 +334,4 @@ printer.talkative();
 
 ## 完全自定义
 
-如果你想完全的自定义的话，没问题，`ScreepsWorldPrinter` 暴露了 `service` 和 `cache` 两个属性，这两者分别提供了地图绘制相关的服务器 api 接口以及对本地缓存的管理。你可以以此为基础开发你自己的绘制功能。
+如果你想完全的自定义的话，没问题，`ScreepsWorldPrinter` 实例暴露了 `service` 和 `cache` 两个属性，这两者分别提供了地图绘制相关的服务器 api 接口以及对本地缓存的管理。你可以以此为基础开发你自己的绘制功能。

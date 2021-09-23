@@ -1,0 +1,25 @@
+name: MERGE
+
+on:
+  push:
+    branches:
+      - release
+
+jobs:
+  work:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - uses: egordm/gha-yarn-node-cache@v1
+
+    - name: Install
+      run: yarn install
+
+    - name: Build
+      run: yarn run build
+
+    - name: Publish
+      uses: JS-DevTools/npm-publish@v1
+      with:
+        token: ${{ secrets.NPM_AUTH_TOKEN }}

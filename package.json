@@ -1,6 +1,6 @@
 {
   "name": "screeps-world-printer",
-  "version": "1.0.0",
+  "version": "0.1.2",
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
     "lint": "eslint src/** && tsc --noEmit",
@@ -11,14 +11,18 @@
   "repository": "git@github.com:HoPGoldy/screeps-world-printer.git",
   "author": "HoPGoldy <hpgless@outlook.com>",
   "license": "MIT",
+  "keywords": ["screeps", "map", "draw", "node", "typescript"],
+  "peerDependencies": {
+    "sharp": "^0.28.3"
+  },
   "dependencies": {
     "async": "^3.2.1",
     "axios": "^0.21.1",
     "cli-progress": "^3.9.0",
-    "fs-extra": "^10.0.0",
-    "sharp": "^0.28.3"
+    "fs-extra": "^10.0.0"
   },
   "devDependencies": {
+    "sharp": "^0.28.3",
     "@types/async": "^3.2.7",
     "@types/cli-progress": "^3.9.2",
     "@types/fs-extra": "^9.0.12",
