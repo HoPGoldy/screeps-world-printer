@@ -2,6 +2,7 @@
 
 [![DRAW_OFFICAL](https://github.com/HoPGoldy/screeps-world-printer/actions/workflows/DRAW_OFFICAL.yml/badge.svg?event=schedule)](https://github.com/HoPGoldy/screeps-world-printer/releases)
 [![npm](https://img.shields.io/npm/v/screeps-world-printer)](https://www.npmjs.com/package/screeps-world-printer)
+[![Coverage Status](https://coveralls.io/repos/github/HoPGoldy/screeps-world-printer/badge.svg?branch=main)](https://coveralls.io/github/HoPGoldy/screeps-world-printer?branch=main)
 
 screeps-world-printer 是一个简单且支持自定义的 screeps 游戏地图绘制工具。
 

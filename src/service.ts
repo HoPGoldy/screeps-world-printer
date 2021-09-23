@@ -46,7 +46,7 @@ export class ScreepsService {
             this.roomTileCdn = opt.roomTileCdn ?? DEFAULT_ROOM_TILE_CDN;
             this.shard = opt.shard;
         }
-        else if ('username' in this.connectInfo && 'password' in this.connectInfo) {
+        else if ('username' in opt && 'password' in opt) {
             await this.login(opt.username, opt.password);
         }
         else throw new Error('无效的连接方式');
@@ -123,7 +123,8 @@ export class ScreepsService {
                 ? `${base}/map/${this.shard}/${roomName}.png`
                 : `${base}/assets/map/${roomName}.png`;
 
-            const roomTile = await axios.get<Buffer>(fullPath, {
+            const roomTile = await this.http.get<Buffer>(fullPath, {
+                baseURL: '',
                 timeout: DEFAULT_TIMEOUT,
                 responseType: 'arraybuffer'
             });

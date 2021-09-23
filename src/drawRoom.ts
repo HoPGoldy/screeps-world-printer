@@ -49,7 +49,7 @@ const maskProcessor: DrawProcessor = async function (roomTile, material) {
  * 渲染房间对应的头像，以及对头像进行缩放和透明度处理
  */
 const badgeProcessor: DrawProcessor = async function (roomTile, material) {
-    if (!material.getBadge || !material.getBadgeBorder) return undefined;
+    if (!material.roomInfo.own || !material.getBadge || !material.getBadgeBorder) return undefined;
 
     // 将头像和边框贴起来
     const rawBadge = await material.getBadge();
@@ -57,7 +57,7 @@ const badgeProcessor: DrawProcessor = async function (roomTile, material) {
     const badgeWithBorder = sharp(rawBadge).composite([{ input: badgeBorder, blend: 'atop' }]);
 
     const { width: rawBadgeWidth } = await badgeWithBorder.metadata();
-    const ownLevel = material.roomInfo.own?.level;
+    const ownLevel = material.roomInfo.own.level;
 
     // level 有可能为 0，所以需要特判一下
     if (!rawBadgeWidth || ownLevel === undefined) {
