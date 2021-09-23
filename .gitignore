@@ -112,3 +112,5 @@ dist
 .screeps-world-printer/
 
 .unit-test-*
+
+.coveralls.yml

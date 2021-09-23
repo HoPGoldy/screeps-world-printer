@@ -60,6 +60,10 @@ test('可以读写头像', async () => {
 
     // 模拟一下正常使用，不能出现报错
     await expect(useBuffer(existGetter)).resolves.toBeUndefined();
+
+    // 此时就可以直接访问到缓存
+    const newBadgeGetter = await cache.createBadgeGetter(playerInfo);
+    expect(newBadgeGetter).not.toBeUndefined();
 });
 
 test('可以读写地图瓦片', async () => {
@@ -80,6 +84,10 @@ test('可以读写地图瓦片', async () => {
 
     // 模拟一下正常使用，不能出现报错
     await expect(useBuffer(existGetter)).resolves.toBeUndefined();
+
+    // 此时就可以直接访问到缓存
+    const newRoomGetter = await cache.createRoomGetter(roomName);
+    expect(newRoomGetter).not.toBeUndefined();
 });
 
 test('可以读写地图行缓存', async () => {

@@ -18,3 +18,10 @@ jobs:
 
     - name: Test
       run: yarn run test-unit
+
+    - name: Coveralls
+      env:
+        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        COVERALLS_SERVICE_NAME: github-action
+        COVERALLS_GIT_BRANCH: screeps-world-printer
+      run: yarn run coveralls
